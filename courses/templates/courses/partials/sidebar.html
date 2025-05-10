@@ -21,7 +21,7 @@
                 <span>Cursos</span>
             </a>
             
-            <!-- Módulos -->
+            {% comment %} <!-- Módulos -->
             <a href="{% url 'courses:module_list' %}" class="flex items-center p-3 rounded-lg {% if request.resolver_match.url_name == 'module_list' or request.resolver_match.url_name == 'module_detail' %}bg-indigo-700{% else %}hover:bg-indigo-700{% endif %} transition-colors">
                 <i class="fas fa-cubes w-6"></i>
                 <span>Módulos</span>
@@ -37,7 +37,7 @@
             <a href="{% url 'courses:session_list' %}" class="flex items-center p-3 rounded-lg {% if request.resolver_match.url_name == 'session_list' or request.resolver_match.url_name == 'session_detail' %}bg-indigo-700{% else %}hover:bg-indigo-700{% endif %} transition-colors">
                 <i class="fas fa-chalkboard-teacher w-6"></i>
                 <span>Sesiones</span>
-            </a>
+            </a> {% endcomment %}
         </div>
     </div>
     

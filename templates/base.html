@@ -35,36 +35,13 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-gray-100 h-screen overflow-hidden flex flex-col">
-    <!-- Navbar - con colores invertidos -->
-    <nav class="bg-white text-indigo-600  sticky top-0 z-40 relative">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center">
-                    <a href="/" class="font-bold text-xl">
-                        <i class="fas fa-graduation-cap mr-2"></i>Bootcamp Inteligente
-                    </a>
-                </div>
-                <div class="hidden md:flex items-center space-x-4">
-                    <!-- Enlaces de navegación con colores invertidos -->
-                    <a href="/" class="hover:text-indigo-800">Inicio</a>
-                    <a href="{% url 'courses:dashboard' %}" class="hover:text-indigo-800">Cursos</a>
-                    <a href="#" class="hover:text-indigo-800">Estudiantes</a>
-                    <a href="#" class="hover:text-indigo-800">Instructores</a>
-                    <a href="#" class="hover:text-indigo-800">Configuración</a>
-                </div>
-                <div class="md:hidden">
-                    <button class="focus:outline-none">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                </div>
-            </div>
-            <!-- Mobile menu, se puede implementar con JavaScript -->
-            <div class="hidden md:hidden">
-                <!-- Aquí irán los enlaces para móvil -->
-            </div>
-        </div>
-    </nav>
+<body class="h-screen overflow-hidden flex flex-col">
+    <!-- Navbar - elegir según el tipo de usuario -->
+    {% if user.is_authenticated and user.role == 'instructor' %}
+        {% include "partials/navbar_instructor.html" %}
+    {% else %}
+        {% include "partials/navbar_student.html" %}
+    {% endif %}
     
     <!-- Django Messages System -->
     {% if messages %}
