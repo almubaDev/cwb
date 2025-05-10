@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Mi perfil | Bootcamp Inteligente{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-indigo-600 text-white">
+                <h3 class="text-lg leading-6 font-medium">
+                    Información de perfil
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-indigo-100">
+                    Actualiza tu información personal aquí.
+                </p>
+            </div>
+            
+            <div class="border-t border-gray-200">
+                <div class="px-4 py-5 sm:p-6">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6 sm:col-span-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                <p class="text-red-500 text-xs italic">{{ form.first_name.errors }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-span-6 sm:col-span-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Apellidos</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                <p class="text-red-500 text-xs italic">{{ form.last_name.errors }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-span-6">
+                                <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-gray-700">Biografía</label>
+                                {{ form.bio }}
+                                {% if form.bio.errors %}
+                                <p class="text-red-500 text-xs italic">{{ form.bio.errors }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-span-6">
+                                <label for="{{ form.avatar.id_for_label }}" class="block text-sm font-medium text-gray-700">Foto de perfil</label>
+                                {% if user.profile.avatar %}
+                                <div class="mt-2 mb-4">
+                                    <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="h-24 w-24 rounded-full object-cover">
+                                </div>
+                                {% endif %}
+                                <div class="mt-2">
+                                    {{ form.avatar }}
+                                </div>
+                                {% if form.avatar.errors %}
+                                <p class="text-red-500 text-xs italic">{{ form.avatar.errors }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200">
+                <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            Información de cuenta
+                        </h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                            Correo: {{ user.email }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                            Rol: {{ user.get_role_display }}
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{% url 'users:password_change' %}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cambiar contraseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

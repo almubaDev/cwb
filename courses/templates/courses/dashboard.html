@@ -1,0 +1,87 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}Dashboard de Cursos | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Dashboard de Cursos</h1>
+        <p class="text-gray-600">Bienvenido al panel de gestión de cursos, módulos, semanas y sesiones.</p>
+    </div>
+
+    <!-- Tarjetas resumen -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Cursos -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Cursos</h2>
+                    <p class="text-3xl font-bold text-indigo-600">{{ total_courses }}</p>
+                </div>
+                <div class="bg-indigo-100 p-3 rounded-full">
+                    <i class="fas fa-book text-indigo-600 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'courses:course_list' %}" class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center">
+                    Ver todos <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Módulos -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Módulos</h2>
+                    <p class="text-3xl font-bold text-green-600">{{ total_modules }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-full">
+                    <i class="fas fa-cubes text-green-600 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'courses:module_list' %}" class="text-sm text-green-600 hover:text-green-800 flex items-center">
+                    Ver todos <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Semanas -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Semanas</h2>
+                    <p class="text-3xl font-bold text-blue-600">{{ total_weeks }}</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-full">
+                    <i class="fas fa-calendar-week text-blue-600 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'courses:week_list' %}" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    Ver todas <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Sesiones -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Sesiones</h2>
+                    <p class="text-3xl font-bold text-purple-600">{{ total_sessions }}</p>
+                </div>
+                <div class="bg-purple-100 p-3 rounded-full">
+                    <i class="fas fa-chalkboard-teacher text-purple-600 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'courses:session_list' %}" class="text-sm text-purple-600 hover:text-purple-800 flex items-center">
+                    Ver todas <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

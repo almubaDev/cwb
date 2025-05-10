@@ -1,0 +1,117 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}{% if week %}Sesiones de {{ week.title }}{% else %}Listado de Sesiones{% endif %} | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="h-full flex flex-col">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            {% if week %}
+                <div class="flex items-center mb-2">
+                    <a href="{% url 'courses:week_detail' week.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                        <i class="fas fa-arrow-left"></i> Volver a la semana
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-800">Sesiones de {{ week.title }}</h1>
+                </div>
+                <p class="text-sm text-gray-500">
+                    Módulo: <a href="{% url 'courses:module_detail' week.module.id %}" class="text-indigo-600 hover:text-indigo-800">{{ week.module.title }}</a> | 
+                    Curso: <a href="{% url 'courses:course_detail' week.module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ week.module.course.title }}</a>
+                </p>
+            {% else %}
+                <h1 class="text-2xl font-bold text-gray-800">Listado de Sesiones</h1>
+            {% endif %}
+        </div>
+        
+        <div>
+            {% if week %}
+                <a href="{% url 'courses:session_create' week.id %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Nueva Sesión
+                </a>
+            {% else %}
+                <a href="{% url 'courses:week_list' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-calendar-week mr-2"></i> Ver Semanas
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Contenedor con scroll para la lista de sesiones -->
+    <div class="flex-1 overflow-auto">
+        {% if sessions %}
+            <div class="space-y-2">
+                {% for session in sessions %}
+                    <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center mb-1">
+                                    <h2 class="text-xl font-bold text-gray-800">Sesión {{ session.order }}: {{ session.title }}</h2>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">
+                                    Semana: <a href="{% url 'courses:week_detail' session.week.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.title }}</a> | 
+                                    Módulo: <a href="{% url 'courses:module_detail' session.week.module.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.module.title }}</a> | 
+                                    Curso: <a href="{% url 'courses:course_detail' session.week.module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.module.course.title }}</a>
+                                </p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'courses:session_detail' session.id %}" class="text-indigo-600 hover:text-indigo-800">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'courses:session_update' session.id %}" class="text-yellow-600 hover:text-yellow-800">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'courses:session_delete' session.id %}" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        {% if week %}
+                            <p class="text-sm text-blue-700">Esta semana aún no tiene sesiones. Añade la primera sesión haciendo clic en "Nueva Sesión".</p>
+                        {% else %}
+                            <p class="text-sm text-blue-700">No hay sesiones disponibles. Selecciona una semana para añadir nuevas sesiones.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación (si es necesaria) -->
+    {% if is_paginated %}
+    <div class="mt-4 flex justify-center">
+        <ul class="flex space-x-2">
+            {% if page_obj.has_previous %}
+                <li>
+                    <a href="?page=1" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">&laquo; Primera</a>
+                </li>
+                <li>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Anterior</a>
+                </li>
+            {% endif %}
+
+            <li class="px-3 py-2 bg-indigo-600 text-white rounded-lg">
+                {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </li>
+
+            {% if page_obj.has_next %}
+                <li>
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Siguiente</a>
+                </li>
+                <li>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Última &raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

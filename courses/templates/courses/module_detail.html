@@ -1,0 +1,80 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}{{ module.title }} | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <div class="flex items-center mb-2">
+            <a href="{% url 'courses:course_detail' module.course.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                <i class="fas fa-arrow-left"></i> Volver al curso
+            </a>
+            <h1 class="text-2xl font-bold text-gray-800">Módulo: {{ module.title }}</h1>
+        </div>
+        <p class="text-sm text-gray-500">Curso: <a href="{% url 'courses:course_detail' module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ module.course.title }}</a></p>
+    </div>
+    <div class="flex space-x-2">
+        <a href="{% url 'courses:week_create' module.id %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-plus mr-1"></i> Semana
+        </a>
+        <a href="{% url 'courses:module_update' module.id %}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-edit mr-1"></i> Editar
+        </a>
+        <a href="{% url 'courses:module_delete' module.id %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-trash-alt mr-1"></i> Eliminar
+        </a>
+    </div>
+</div>
+
+<div class="mb-6">
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+        <h2 class="text-lg font-medium text-gray-800 mb-2">Objetivos</h2>
+        <p class="text-gray-700">{{ module.objectives|linebreaks }}</p>
+    </div>
+    
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-lg font-medium text-gray-800">Semanas</h2>
+            <span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ module.weeks.count }} semanas</span>
+        </div>
+        
+        {% if module.weeks.all %}
+            <div class="space-y-4">
+                {% for week in module.weeks.all %}
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-md font-semibold text-gray-800">Semana {{ week.order }}: {{ week.title }}</h3>
+                                <p class="text-sm text-gray-600 mt-1">{{ week.description|truncatewords:15 }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ week.sessions.count }} sesiones</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'courses:week_detail' week.id %}" class="text-indigo-600 hover:text-indigo-800">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'courses:week_update' week.id %}" class="text-yellow-600 hover:text-yellow-800">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'courses:week_delete' week.id %}" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">Este módulo aún no tiene semanas. Añade la primera semana haciendo clic en el botón "Semana".</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}{{ session.title }} | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <div class="flex items-center mb-2">
+            <a href="{% url 'courses:week_detail' session.week.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                <i class="fas fa-arrow-left"></i> Volver a la semana
+            </a>
+            <h1 class="text-2xl font-bold text-gray-800">Sesión {{ session.order }}: {{ session.title }}</h1>
+        </div>
+        <p class="text-sm text-gray-500">
+            Semana: <a href="{% url 'courses:week_detail' session.week.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.title }}</a> | 
+            Módulo: <a href="{% url 'courses:module_detail' session.week.module.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.module.title }}</a> | 
+            Curso: <a href="{% url 'courses:course_detail' session.week.module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.module.course.title }}</a>
+        </p>
+    </div>
+    <div class="flex space-x-2">
+        <a href="{% url 'courses:session_update' session.id %}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-edit mr-1"></i> Editar
+        </a>
+        <a href="{% url 'courses:session_delete' session.id %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-trash-alt mr-1"></i> Eliminar
+        </a>
+    </div>
+</div>
+
+<div class="mb-6">
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+        <h2 class="text-lg font-medium text-gray-800 mb-2">Detalles de la sesión</h2>
+        <div class="ml-3 space-y-2">
+            <p><strong>Orden:</strong> {{ session.order }}</p>
+            <p><strong>Fecha de creación:</strong> {{ session.created|date:"d/m/Y H:i" }}</p>
+            <p><strong>Última actualización:</strong> {{ session.updated|date:"d/m/Y H:i" }}</p>
+        </div>
+    </div>
+    
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h2 class="text-lg font-medium text-gray-800 mb-2">Ruta de navegación</h2>
+        <div class="flex flex-wrap items-center text-sm text-gray-600">
+            <a href="{% url 'courses:course_detail' session.week.module.course.id %}" class="text-indigo-600 hover:text-indigo-800">
+                <i class="fas fa-book mr-1"></i> {{ session.week.module.course.title }}
+            </a>
+            <i class="fas fa-chevron-right mx-2"></i>
+            <a href="{% url 'courses:module_detail' session.week.module.id %}" class="text-indigo-600 hover:text-indigo-800">
+                <i class="fas fa-cubes mr-1"></i> {{ session.week.module.title }}
+            </a>
+            <i class="fas fa-chevron-right mx-2"></i>
+            <a href="{% url 'courses:week_detail' session.week.id %}" class="text-indigo-600 hover:text-indigo-800">
+                <i class="fas fa-calendar-week mr-1"></i> {{ session.week.title }}
+            </a>
+            <i class="fas fa-chevron-right mx-2"></i>
+            <span class="text-gray-800">
+                <i class="fas fa-chalkboard-teacher mr-1"></i> {{ session.title }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Aquí puedes agregar más secciones para los contenidos de la sesión en el futuro -->
+
+{% endblock %}

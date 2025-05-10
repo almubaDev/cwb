@@ -1,0 +1,115 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}{% if module %}Semanas de {{ module.title }}{% else %}Listado de Semanas{% endif %} | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="h-full flex flex-col">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            {% if module %}
+                <div class="flex items-center mb-2">
+                    <a href="{% url 'courses:module_detail' module.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                        <i class="fas fa-arrow-left"></i> Volver al módulo
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-800">Semanas de {{ module.title }}</h1>
+                </div>
+                <p class="text-sm text-gray-500">Curso: <a href="{% url 'courses:course_detail' module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ module.course.title }}</a></p>
+            {% else %}
+                <h1 class="text-2xl font-bold text-gray-800">Listado de Semanas</h1>
+            {% endif %}
+        </div>
+        
+        <div>
+            {% if module %}
+                <a href="{% url 'courses:week_create' module.id %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Nueva Semana
+                </a>
+            {% else %}
+                <a href="{% url 'courses:module_list' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-cubes mr-2"></i> Ver Módulos
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Contenedor con scroll para la lista de semanas -->
+    <div class="flex-1 overflow-auto">
+        {% if weeks %}
+            <div class="space-y-4">
+                {% for week in weeks %}
+                    <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center mb-1">
+                                    <h2 class="text-xl font-bold text-gray-800">Semana {{ week.order }}: {{ week.title }}</h2>
+                                    <span class="ml-3 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ week.sessions.count }} sesiones</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">
+                                    Módulo: <a href="{% url 'courses:module_detail' week.module.id %}" class="text-indigo-600 hover:text-indigo-800">{{ week.module.title }}</a> | 
+                                    Curso: <a href="{% url 'courses:course_detail' week.module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ week.module.course.title }}</a>
+                                </p>
+                                <p class="text-gray-700">{{ week.description|truncatewords:30 }}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'courses:week_detail' week.id %}" class="text-indigo-600 hover:text-indigo-800">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'courses:week_update' week.id %}" class="text-yellow-600 hover:text-yellow-800">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'courses:week_delete' week.id %}" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        {% if module %}
+                            <p class="text-sm text-blue-700">Este módulo aún no tiene semanas. Añade la primera semana haciendo clic en "Nueva Semana".</p>
+                        {% else %}
+                            <p class="text-sm text-blue-700">No hay semanas disponibles. Selecciona un módulo para añadir nuevas semanas.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación (si es necesaria) -->
+    {% if is_paginated %}
+    <div class="mt-4 flex justify-center">
+        <ul class="flex space-x-2">
+            {% if page_obj.has_previous %}
+                <li>
+                    <a href="?page=1" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">&laquo; Primera</a>
+                </li>
+                <li>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Anterior</a>
+                </li>
+            {% endif %}
+
+            <li class="px-3 py-2 bg-indigo-600 text-white rounded-lg">
+                {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </li>
+
+            {% if page_obj.has_next %}
+                <li>
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Siguiente</a>
+                </li>
+                <li>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Última &raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

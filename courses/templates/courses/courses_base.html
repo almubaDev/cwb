@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex h-screen py-6"> <!-- Usamos h-screen para ocupar toda la altura de la ventana -->
+    <!-- Sidebar - Posicionado absolutamente para cubrir todo, incluido el navbar -->
+    <div class="w-64 bg-indigo-600 fixed left-0 top-0 bottom-0 z-50 overflow-y-auto">
+        {% include "courses/partials/sidebar.html" %}
+    </div>
+    
+    <!-- Main content - Desplazado a la derecha para dejar espacio al sidebar -->
+    <div class="ml-64 flex-1 overflow-auto pt-16 p-6"> <!-- pt-16 para dejar espacio al navbar -->
+        {% block courses_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

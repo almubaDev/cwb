@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bootcamp Inteligente{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN con configuración personalizada -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              indigo: {
+                50: '#e6f0f7',
+                100: '#cce1f0',
+                200: '#99c3e0',
+                300: '#66a4d1',
+                400: '#3386c1',
+                500: '#3887BE', // Color principal
+                600: '#2d6e9e',
+                700: '#26567d',
+                800: '#1e3f5d',
+                900: '#17273c',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden flex flex-col">
+    <!-- Navbar - con colores invertidos -->
+    <nav class="bg-white text-indigo-600  sticky top-0 z-40 relative">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="/" class="font-bold text-xl">
+                        <i class="fas fa-graduation-cap mr-2"></i>Bootcamp Inteligente
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <!-- Enlaces de navegación con colores invertidos -->
+                    <a href="/" class="hover:text-indigo-800">Inicio</a>
+                    <a href="{% url 'courses:dashboard' %}" class="hover:text-indigo-800">Cursos</a>
+                    <a href="#" class="hover:text-indigo-800">Estudiantes</a>
+                    <a href="#" class="hover:text-indigo-800">Instructores</a>
+                    <a href="#" class="hover:text-indigo-800">Configuración</a>
+                </div>
+                <div class="md:hidden">
+                    <button class="focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile menu, se puede implementar con JavaScript -->
+            <div class="hidden md:hidden">
+                <!-- Aquí irán los enlaces para móvil -->
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Django Messages System -->
+    {% if messages %}
+    <div class="container mx-auto px-4 py-2">
+        {% for message in messages %}
+        <div class="{% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% elif message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif message.tags == 'warning' %}bg-yellow-100 border-yellow-400 text-yellow-700{% elif message.tags == 'info' %}bg-blue-100 border-blue-400 text-blue-700{% else %}bg-gray-100 border-gray-400 text-gray-700{% endif %} px-4 py-3 rounded relative mb-4 border" role="alert">
+            <span class="block sm:inline">{{ message }}</span>
+            <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none'">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- JavaScript Block -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

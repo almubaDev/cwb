@@ -1,0 +1,39 @@
+{% load static %}
+
+<nav class="bg-white shadow-md sticky top-0 z-40">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center">
+                <img class="w-8 h-8 rounded-md" src="{% static 'img/logo.png' %}" alt="Logo">
+                <span class="font-bold text-xl text-indigo-600">
+                    Academia Constructores Web: Aprende, construye, despliega.
+                </span>      
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'home:home' %}" class="text-gray-700 hover:text-indigo-600">Inicio</a>
+                
+                {% if user.is_authenticated %}
+                    <!-- Usuario autenticado -->
+                    <a href="{% url 'users:profile' %}" class="text-gray-700 hover:text-indigo-600">
+                        <i class="fas fa-user mr-1"></i>Perfil
+                    </a>
+                    <form method="post" action="{% url 'users:logout' %}" class="inline-block">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-700 hover:text-indigo-600 bg-transparent border-none cursor-pointer">
+                            <i class="fas fa-sign-out-alt mr-1"></i>Cerrar Sesión
+                        </button>
+                    </form>
+                    
+                {% else %}
+                    <!-- Usuario no autenticado -->
+                    <a href="{% url 'users:login' %}" class="text-gray-700 hover:text-indigo-600">
+                        <i class="fas fa-sign-in-alt mr-1"></i>Iniciar Sesión
+                    </a>
+                    <a href="{% url 'users:signup' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                        Registrarse
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
