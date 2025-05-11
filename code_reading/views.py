@@ -97,6 +97,11 @@ class CodeReadingUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_update'] = True
+        
+        # Obtener pasos asociados con sus bloques para mostrar en la vista
+        steps = CodeReadingStep.objects.filter(code_reading=self.object).order_by('order')
+        context['steps'] = steps
+        
         return context
     
     def get_form_kwargs(self):
@@ -414,11 +419,7 @@ class StudentCodeReadingView(LoginRequiredMixin, DetailView):
                     })
             
             # Verificar si todas las preguntas obligatorias tienen respuesta
-            all_answered = True
-            for question in questions:
-                if question.id not in student_responses:
-                    all_answered = False
-                    break
+            all_answered = all(question.id in student_responses for question in questions)
             
             # Obtener pasos anterior y siguiente para navegación
             all_steps = list(CodeReadingStep.objects.filter(
@@ -467,37 +468,15 @@ class SubmitStudentResponseView(LoginRequiredMixin, FormView):
             question=question,
             defaults={
                 'response_text': form.cleaned_data['response_text'],
-                'is_correct': None,  # Por ahora, sin evaluación
-                'ai_feedback': ''
+                'ai_feedback': ''  # Se actualizará con feedback de IA
             }
         )
         
         # Aquí iría la lógica para evaluar la respuesta con IA
-        # Esta es una implementación básica de evaluación sin IA
-        correct = False
-        feedback = "Pendiente de evaluación."
+        # Esta es una implementación básica que posteriormente se conectará con IA
+        feedback = "Tu respuesta será evaluada por IA pronto."
         
-        if question.question_type == 'multiple':
-            # Para preguntas de opción múltiple, verificar si la opción seleccionada es correcta
-            option_index = int(response.response_text)
-            if option_index < len(question.options):
-                correct = question.options[option_index].get('is_correct', False)
-                if correct:
-                    feedback = "¡Respuesta correcta!"
-                else:
-                    feedback = "Respuesta incorrecta. Intenta nuevamente."
-        elif question.question_type == 'boolean':
-            # Para preguntas de verdadero/falso
-            correct_value = question.correct_answer.lower() in ['true', 'verdadero', 'sí', 'si', 'yes']
-            user_value = response.response_text.lower() in ['true', 'verdadero']
-            correct = correct_value == user_value
-            if correct:
-                feedback = "¡Respuesta correcta!"
-            else:
-                feedback = "Respuesta incorrecta. Intenta nuevamente."
-        
-        # Actualizar estado y feedback
-        response.is_correct = correct
+        # Actualizar feedback
         response.ai_feedback = feedback
         response.save()
         
@@ -531,7 +510,6 @@ class SubmitStudentResponseView(LoginRequiredMixin, FormView):
         # Retornar respuesta JSON con el resultado
         return JsonResponse({
             'success': True,
-            'is_correct': correct,
             'feedback': feedback
         })
     
@@ -899,28 +877,9 @@ def question_block_api(request):
            if data.get('related_code_block'):
                related_code_block = get_object_or_404(CodeBlock, id=data.get('related_code_block'))
            
-           # Procesar opciones para preguntas de opción múltiple
-           options = None
-           if data.get('question_type') == 'multiple' and data.get('options_text'):
-               options = []
-               for line in data.get('options_text').strip().split('\n'):
-                   line = line.strip()
-                   if not line:
-                       continue
-                   
-                   is_correct = line.startswith('*')
-                   text = line[1:].strip() if is_correct else line
-                   
-                   options.append({
-                       'text': text,
-                       'is_correct': is_correct
-                   })
-           
            question = QuestionBlock.objects.create(
                step=step,
                question_text=data.get('question_text'),
-               question_type=data.get('question_type'),
-               options=options,
                correct_answer=data.get('correct_answer'),
                order=data.get('order'),
                related_code_block=related_code_block
@@ -932,12 +891,9 @@ def question_block_api(request):
                    'id': question.id,
                    'step': question.step.id,
                    'question_text': question.question_text,
-                   'question_type': question.question_type,
-                   'options': question.options,
                    'correct_answer': question.correct_answer,
                    'order': question.order,
-                   'related_code_block': question.related_code_block.id if question.related_code_block else None,
-                   'options_text': data.get('options_text', '')
+                   'related_code_block': question.related_code_block.id if question.related_code_block else None
                }
            })
            
@@ -960,25 +916,15 @@ def question_block_detail_api(request, block_id):
    question = get_object_or_404(QuestionBlock, id=block_id)
    
    if request.method == "GET":
-       # Convertir opciones a formato de texto
-       options_text = ""
-       if question.options:
-           for option in question.options:
-               prefix = "* " if option.get('is_correct', False) else ""
-               options_text += f"{prefix}{option.get('text', '')}\n"
-       
        return JsonResponse({
            'success': True,
            'question_block': {
                'id': question.id,
                'step': question.step.id,
                'question_text': question.question_text,
-               'question_type': question.question_type,
-               'options': question.options,
                'correct_answer': question.correct_answer,
                'order': question.order,
-               'related_code_block': question.related_code_block.id if question.related_code_block else None,
-               'options_text': options_text
+               'related_code_block': question.related_code_block.id if question.related_code_block else None
            }
        })
    
@@ -991,27 +937,8 @@ def question_block_detail_api(request, block_id):
            if data.get('related_code_block'):
                related_code_block = get_object_or_404(CodeBlock, id=data.get('related_code_block'))
            
-           # Procesar opciones para preguntas de opción múltiple
-           options = None
-           if data.get('question_type') == 'multiple' and data.get('options_text'):
-               options = []
-               for line in data.get('options_text').strip().split('\n'):
-                   line = line.strip()
-                   if not line:
-                       continue
-                   
-                   is_correct = line.startswith('*')
-                   text = line[1:].strip() if is_correct else line
-                   
-                   options.append({
-                       'text': text,
-                       'is_correct': is_correct
-                   })
-           
            # Actualizar datos
            question.question_text = data.get('question_text', question.question_text)
-           question.question_type = data.get('question_type', question.question_type)
-           question.options = options
            question.correct_answer = data.get('correct_answer', question.correct_answer)
            question.order = data.get('order', question.order)
            question.related_code_block = related_code_block
@@ -1023,12 +950,9 @@ def question_block_detail_api(request, block_id):
                    'id': question.id,
                    'step': question.step.id,
                    'question_text': question.question_text,
-                   'question_type': question.question_type,
-                   'options': question.options,
                    'correct_answer': question.correct_answer,
                    'order': question.order,
-                   'related_code_block': question.related_code_block.id if question.related_code_block else None,
-                   'options_text': data.get('options_text', '')
+                   'related_code_block': question.related_code_block.id if question.related_code_block else None
                }
            })
            

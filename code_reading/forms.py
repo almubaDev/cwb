@@ -189,24 +189,12 @@ class ExplanationBlockForm(forms.ModelForm):
 class QuestionBlockForm(forms.ModelForm):
     """Formulario para crear y editar Bloques de Pregunta"""
 
-    # Campos extra para manejar opciones de opción múltiple
-    options_text = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500',
-            'rows': 4,
-            'placeholder': 'Una opción por línea. Coloca * al inicio de la línea para indicar que es la respuesta correcta.'
-        }),
-        required=False,
-        label="Opciones (para opción múltiple)"
-    )
-
     class Meta:
         model = QuestionBlock
-        fields = ['step', 'question_text', 'question_type', 'correct_answer', 'order', 'related_code_block']
+        fields = ['step', 'question_text', 'correct_answer', 'order', 'related_code_block']
         widgets = {
             'step': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
             'question_text': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500', 'rows': 3}),
-            'question_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
             'correct_answer': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500', 'rows': 3}),
             'order': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
             'related_code_block': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
@@ -230,65 +218,6 @@ class QuestionBlockForm(forms.ModelForm):
                 self.fields['related_code_block'].queryset = CodeBlock.objects.filter(step=self.instance.step)
             else:
                 self.fields['related_code_block'].queryset = CodeBlock.objects.none()
-                
-        # Si ya existe una instancia con opciones, rellenar el campo options_text
-        if self.instance and self.instance.pk and self.instance.options:
-            options_lines = []
-            for option in self.instance.options:
-                prefix = "* " if option.get('is_correct', False) else ""
-                options_lines.append(f"{prefix}{option.get('text', '')}")
-            self.fields['options_text'].initial = "\n".join(options_lines)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        question_type = cleaned_data.get('question_type')
-        options_text = cleaned_data.get('options_text')
-        
-        # Validar que se proporcionen opciones para preguntas de opción múltiple
-        if question_type == 'multiple' and not options_text:
-            self.add_error('options_text', _('Debe proporcionar opciones para preguntas de opción múltiple.'))
-            
-        # Validar que para opción múltiple, al menos una opción sea correcta
-        if question_type == 'multiple' and options_text:
-            has_correct = False
-            for line in options_text.strip().split('\n'):
-                if line.strip().startswith('*'):
-                    has_correct = True
-                    break
-            if not has_correct:
-                self.add_error('options_text', _('Al menos una opción debe ser marcada como correcta (con *).'))
-                
-        return cleaned_data
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        
-        # Procesar opciones para preguntas de opción múltiple
-        if instance.question_type == 'multiple':
-            options_text = self.cleaned_data.get('options_text', '')
-            options = []
-            
-            for line in options_text.strip().split('\n'):
-                line = line.strip()
-                if not line:
-                    continue
-                    
-                is_correct = line.startswith('*')
-                text = line[1:].strip() if is_correct else line
-                
-                options.append({
-                    'text': text,
-                    'is_correct': is_correct
-                })
-                
-            instance.options = options
-        else:
-            instance.options = None
-            
-        if commit:
-            instance.save()
-            
-        return instance
 
 
 class StudentResponseForm(forms.ModelForm):
@@ -304,19 +233,3 @@ class StudentResponseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.question = kwargs.pop('question', None)
         super().__init__(*args, **kwargs)
-        
-        # Ajustar el widget según el tipo de pregunta
-        if self.question:
-            if self.question.question_type == 'multiple':
-                choices = [(i, option.get('text', '')) for i, option in enumerate(self.question.options or [])]
-                self.fields['response_text'] = forms.ChoiceField(
-                    choices=choices,
-                    widget=forms.RadioSelect(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'}),
-                    label="Selecciona una opción"
-                )
-            elif self.question.question_type == 'boolean':
-                self.fields['response_text'] = forms.ChoiceField(
-                    choices=[('true', 'Verdadero'), ('false', 'Falso')],
-                    widget=forms.RadioSelect(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'}),
-                    label="Selecciona"
-                )

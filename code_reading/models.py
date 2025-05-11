@@ -186,12 +186,6 @@ class QuestionBlock(models.Model):
     Representa una pregunta que el estudiante debe responder,
     ubicada en la parte derecha.
     """
-    QUESTION_TYPES = (
-        ('text', 'Respuesta de texto'),
-        ('multiple', 'Opción múltiple'),
-        ('boolean', 'Verdadero/Falso'),
-    )
-    
     step = models.ForeignKey(
         CodeReadingStep,
         on_delete=models.CASCADE,
@@ -200,18 +194,6 @@ class QuestionBlock(models.Model):
     )
     question_text = models.TextField(
         verbose_name="Texto de la pregunta"
-    )
-    question_type = models.CharField(
-        max_length=20,
-        choices=QUESTION_TYPES,
-        default='text',
-        verbose_name="Tipo de pregunta"
-    )
-    options = models.JSONField(
-        blank=True,
-        null=True,
-        verbose_name="Opciones (para opción múltiple)",
-        help_text="Lista de opciones en formato JSON"
     )
     correct_answer = models.TextField(
         verbose_name="Respuesta correcta",
@@ -257,10 +239,6 @@ class StudentResponse(models.Model):
     )
     response_text = models.TextField(
         verbose_name="Respuesta del estudiante"
-    )
-    is_correct = models.BooleanField(
-        null=True,
-        verbose_name="¿Es correcta?"
     )
     ai_feedback = models.TextField(
         blank=True,

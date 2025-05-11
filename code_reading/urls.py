@@ -42,7 +42,7 @@ urlpatterns = [
     # Vistas complementarias
     path('sessions/<int:session_id>/code_readings/', views.session_code_readings, name='session_code_readings'),
     
-    # *** NUEVOS ENDPOINTS API PARA AJAX ***
+    # *** ENDPOINTS API PARA AJAX ***
     # API para Steps
     path('api/steps/', views.step_api, name='api_steps'),
     path('api/steps/<int:step_id>/', views.step_detail_api, name='api_step_detail'),
