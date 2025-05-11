@@ -1,0 +1,19 @@
+Consideraciones para la Estructura de Modelos
+Para diseñar estos modelos adecuadamente, debemos tener en cuenta:
+
+Relación con Sesiones: Cada contenido debe relacionarse con una sesión específica.
+Orden de Presentación: Los contenidos deben tener un orden específico dentro de cada sesión.
+Visibilidad y Disponibilidad: Posibilidad de programar cuándo estará disponible cierto contenido.
+Prerrequisitos: Algunos contenidos podrían requerir completar otros antes.
+Seguimiento de Progreso: Sistema para registrar qué contenidos ha completado cada estudiante.
+Interactividad: Algunos contenidos pueden requerir interacción del usuario y registrar respuestas.
+Autoría y Metadatos: Información sobre quién creó el contenido y cuándo.
+Versionado: Posibilidad de actualizar contenidos manteniendo versiones anteriores.
+
+Estrategia de Implementación
+Una buena estrategia sería:
+
+Crear un modelo base abstracto ContentItem con campos comunes a todos los tipos de contenido.
+Implementar modelos específicos para cada tipo de contenido que hereden del modelo base.
+Establecer la relación con la sesión a través de un ForeignKey en el modelo base.
+Crear un sistema para organizar la presentación de contenidos en la interfaz de usuario.

@@ -1,0 +1,354 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}{% if form.instance.id %}Editar{% else %}Nuevo{% endif %} Video | Bootcamp Inteligente{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-container {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        background-color: #f3f4f6;
+        overflow: hidden;
+        border-radius: 0.5rem;
+    }
+    .preview-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    .preview-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+</style>
+{% endblock %}
+
+{% block courses_content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="mb-6">
+        <div class="flex items-center mb-4">
+            {% if form.instance.id %}
+                <a href="{% url 'courses:videoclass_detail' form.instance.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Editar Video</h1>
+            {% elif session %}
+                <a href="{% url 'courses:session_detail' session.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                    <i class="fas fa-arrow-left"></i> Volver a la sesión
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Nuevo Video para {{ session.title }}</h1>
+            {% else %}
+                <a href="{% url 'courses:videoclass_list' %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Nuevo Video</h1>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Columna izquierda - Información básica -->
+            <div>
+                <!-- Sesión -->
+                <div class="mb-4">
+                    <label for="{{ form.session.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Sesión</label>
+                    <select id="{{ form.session.id_for_label }}" name="{{ form.session.html_name }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% for choice in form.session.field.choices %}
+                            <option value="{{ choice.0 }}" {% if form.session.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.session.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.session.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Título -->
+                <div class="mb-4">
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                    <input type="text" id="{{ form.title.id_for_label }}" name="{{ form.title.html_name }}" value="{{ form.title.value|default_if_none:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Título del video">
+                    {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- URL del video -->
+                <div class="mb-4">
+                    <label for="{{ form.video_url.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">URL del Video</label>
+                    <input type="url" id="{{ form.video_url.id_for_label }}" name="{{ form.video_url.html_name }}" value="{{ form.video_url.value|default_if_none:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://www.youtube.com/watch?v=..." onchange="updateVideoPreview(this.value)">
+                    {% if form.video_url.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.video_url.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.video_url.help_text }}</p>
+                </div>
+                
+                <!-- Duración -->
+                <div class="mb-4">
+                    <label for="{{ form.duration.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Duración (segundos)</label>
+                    <input type="number" id="{{ form.duration.id_for_label }}" name="{{ form.duration.html_name }}" value="{{ form.duration.value|default_if_none:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Duración en segundos">
+                    {% if form.duration.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.duration.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">{{ form.duration.help_text }}</p>
+                </div>
+                
+                <!-- URL de diapositivas -->
+                <div class="mb-4">
+                    <label for="{{ form.slides_url.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">URL de Diapositivas</label>
+                    <input type="url" id="{{ form.slides_url.id_for_label }}" name="{{ form.slides_url.html_name }}" value="{{ form.slides_url.value|default_if_none:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://docs.google.com/presentation/...">
+                    {% if form.slides_url.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.slides_url.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Descripción -->
+                <div class="mb-4">
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea id="{{ form.description.id_for_label }}" name="{{ form.description.html_name }}" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Descripción del video">{{ form.description.value|default_if_none:'' }}</textarea>
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Transcripción -->
+                <div class="mb-4">
+                    <label for="{{ form.transcript.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Transcripción</label>
+                    <textarea id="{{ form.transcript.id_for_label }}" name="{{ form.transcript.html_name }}" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Transcripción del contenido del video">{{ form.transcript.value|default_if_none:'' }}</textarea>
+                    {% if form.transcript.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.transcript.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Columna derecha - Vista previa y configuración adicional -->
+            <div>
+                <!-- Vista previa del video -->
+                <div class="mb-6">
+                    <h3 class="text-md font-semibold mb-2">Vista previa</h3>
+                    <div class="preview-container">
+                        <div id="video-preview-placeholder" class="preview-placeholder">
+                            <i class="fas fa-film text-gray-400 text-4xl mb-2"></i>
+                            <p class="text-gray-500 text-sm">Ingresa una URL de video para ver una vista previa</p>
+                        </div>
+                        <iframe id="video-preview-frame" style="display: none;"></iframe>
+                    </div>
+                </div>
+                
+                <!-- Miniatura -->
+                <div class="mb-4">
+                    <label for="{{ form.thumbnail.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Miniatura</label>
+                    {% if form.instance.thumbnail %}
+                        <div class="mb-2">
+                            <img src="{{ form.instance.thumbnail.url }}" alt="Miniatura actual" class="h-32 object-cover rounded-md">
+                            <p class="text-xs text-gray-500 mt-1">Miniatura actual</p>
+                        </div>
+                    {% endif %}
+                    <input type="file" id="{{ form.thumbnail.id_for_label }}" name="{{ form.thumbnail.html_name }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    {% if form.thumbnail.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.thumbnail.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Orden -->
+                    <div class="mb-4">
+                        <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Orden</label>
+                        <input type="number" id="{{ form.order.id_for_label }}" name="{{ form.order.html_name }}" value="{{ form.order.value|default_if_none:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: 1, 2, 3...">
+                        {% if form.order.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.order.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Duración estimada -->
+                    <div class="mb-4">
+                        <label for="{{ form.duration_minutes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Tiempo estimado (min)</label>
+                        <input type="number" id="{{ form.duration_minutes.id_for_label }}" name="{{ form.duration_minutes.html_name }}" value="{{ form.duration_minutes.value|default_if_none:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Tiempo en minutos">
+                        {% if form.duration_minutes.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.duration_minutes.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Etiquetas -->
+                <div class="mb-4">
+                    <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Etiquetas</label>
+                    <input type="text" id="{{ form.tags.id_for_label }}" name="{{ form.tags.html_name }}" value="{{ form.tags.value|default_if_none:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="python, django, tutorial">
+                    {% if form.tags.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tags.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Separadas por comas (ej: python, django, html)</p>
+                </div>
+                
+                <!-- Nivel de dificultad -->
+                <div class="mb-4">
+                    <label for="{{ form.difficulty_level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nivel de dificultad</label>
+                    <select id="{{ form.difficulty_level.id_for_label }}" name="{{ form.difficulty_level.html_name }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% for choice in form.difficulty_level.field.choices %}
+                            <option value="{{ choice.0 }}" {% if form.difficulty_level.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.difficulty_level.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.difficulty_level.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Fechas de disponibilidad -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="{{ form.available_from.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Disponible desde</label>
+                        <input type="datetime-local" id="{{ form.available_from.id_for_label }}" name="{{ form.available_from.html_name }}" value="{% if form.available_from.value %}{{ form.available_from.value|date:'Y-m-d\TH:i' }}{% endif %}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% if form.available_from.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.available_from.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.available_until.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Disponible hasta</label>
+                        <input type="datetime-local" id="{{ form.available_until.id_for_label }}" name="{{ form.available_until.html_name }}" value="{% if form.available_until.value %}{{ form.available_until.value|date:'Y-m-d\TH:i' }}{% endif %}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% if form.available_until.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.available_until.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Opciones -->
+                <div class="mb-6 space-y-3">
+                    <div class="flex items-center">
+                        <input id="{{ form.is_visible.id_for_label }}" name="{{ form.is_visible.html_name }}" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {% if form.is_visible.value %}checked{% endif %}>
+                        <label for="{{ form.is_visible.id_for_label }}" class="ml-2 block text-sm text-gray-700">Visible para estudiantes</label>
+                        {% if form.is_visible.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.is_visible.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input id="{{ form.is_mandatory.id_for_label }}" name="{{ form.is_mandatory.html_name }}" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {% if form.is_mandatory.value %}checked{% endif %}>
+                        <label for="{{ form.is_mandatory.id_for_label }}" class="ml-2 block text-sm text-gray-700">Es obligatorio</label>
+                        {% if form.is_mandatory.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.is_mandatory.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input id="{{ form.is_evaluable.id_for_label }}" name="{{ form.is_evaluable.html_name }}" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {% if form.is_evaluable.value %}checked{% endif %}>
+                        <label for="{{ form.is_evaluable.id_for_label }}" class="ml-2 block text-sm text-gray-700">Es evaluable</label>
+                        {% if form.is_evaluable.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.is_evaluable.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input id="{{ form.is_external.id_for_label }}" name="{{ form.is_external.html_name }}" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {% if form.is_external.value %}checked{% endif %}>
+                        <label for="{{ form.is_external.id_for_label }}" class="ml-2 block text-sm text-gray-700">Es video externo</label>
+                        {% if form.is_external.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.is_external.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            {% if form.instance.id %}
+                <a href="{% url 'courses:videoclass_detail' form.instance.id %}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</a>
+            {% elif session %}
+                <a href="{% url 'courses:session_detail' session.id %}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</a>
+            {% else %}
+                <a href="{% url 'courses:videoclass_list' %}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</a>
+            {% endif %}
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">
+                <i class="fas fa-save mr-1"></i> Guardar
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateVideoPreview(url) {
+        const previewFrame = document.getElementById('video-preview-frame');
+        const placeholder = document.getElementById('video-preview-placeholder');
+        
+        if (!url) {
+            previewFrame.style.display = 'none';
+            placeholder.style.display = 'flex';
+            return;
+        }
+        
+        // Obtener la URL para embeber
+        let embedUrl = getEmbedUrl(url);
+        
+        if (embedUrl) {
+            previewFrame.src = embedUrl;
+            previewFrame.style.display = 'block';
+            placeholder.style.display = 'none';
+        } else {
+            previewFrame.style.display = 'none';
+            placeholder.style.display = 'flex';
+        }
+    }
+    
+    function getEmbedUrl(url) {
+        url = url.toLowerCase();
+        
+        // YouTube
+        if (url.includes('youtube.com/watch') && url.includes('v=')) {
+            const videoId = url.split('v=')[1].split('&')[0];
+            return `https://www.youtube.com/embed/${videoId}`;
+        } 
+        else if (url.includes('youtu.be/')) {
+            const videoId = url.split('youtu.be/')[1].split('?')[0];
+            return `https://www.youtube.com/embed/${videoId}`;
+        }
+        // Vimeo
+        else if (url.includes('vimeo.com/')) {
+            try {
+                const videoId = url.split('vimeo.com/')[1].split('?')[0];
+                return `https://player.vimeo.com/video/${videoId}`;
+            } catch (e) {
+                return null;
+            }
+        }
+        
+        return null;
+    }
+    
+    function convertTimeToSeconds(timeString) {
+        if (!timeString.includes(':')) return timeString;
+        
+        const parts = timeString.split(':').map(part => parseInt(part, 10));
+        
+        if (parts.length === 3) {
+            // Format: HH:MM:SS
+            return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+        } else if (parts.length === 2) {
+            // Format: MM:SS
+            return (parts[0] * 60) + parts[1];
+        }
+        
+        return timeString;
+    }
+    
+    // Inicializar vista previa si hay una URL
+    document.addEventListener('DOMContentLoaded', function() {
+        const videoUrlInput = document.getElementById('{{ form.video_url.id_for_label }}');
+        if (videoUrlInput && videoUrlInput.value) {
+            updateVideoPreview(videoUrlInput.value);
+        }
+    });
+</script>
+{% endblock %}

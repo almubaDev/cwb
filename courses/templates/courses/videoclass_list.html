@@ -1,0 +1,157 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}{% if session %}Videos de {{ session.title }}{% else %}Listado de Videos{% endif %} | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="h-full flex flex-col">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            {% if session %}
+                <div class="flex items-center mb-2">
+                    <a href="{% url 'courses:session_detail' session.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                        <i class="fas fa-arrow-left"></i> Volver a la sesión
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-800">Videos de {{ session.title }}</h1>
+                </div>
+                <p class="text-sm text-gray-500">
+                    Semana: <a href="{% url 'courses:week_detail' session.week.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.title }}</a> | 
+                    Módulo: <a href="{% url 'courses:module_detail' session.week.module.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.module.title }}</a> | 
+                    Curso: <a href="{% url 'courses:course_detail' session.week.module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ session.week.module.course.title }}</a>
+                </p>
+            {% else %}
+                <h1 class="text-2xl font-bold text-gray-800">Listado de Videos</h1>
+            {% endif %}
+        </div>
+        
+        <div>
+            {% if session %}
+                <a href="{% url 'courses:videoclass_create' session.id %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Nuevo Video
+                </a>
+            {% else %}
+                <a href="{% url 'courses:session_list' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-chalkboard-teacher mr-2"></i> Ver Sesiones
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Contenedor con scroll para la lista de videos -->
+    <div class="flex-1 overflow-auto">
+        {% if videos %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for video in videos %}
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                        <div class="aspect-w-16 aspect-h-9 bg-gray-200">
+                            {% if video.thumbnail %}
+                                <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="object-cover w-full h-full">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                                    <i class="fas fa-video text-gray-400 text-4xl"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h2 class="text-lg font-bold text-gray-800 mb-1 truncate">{{ video.title }}</h2>
+                                    <p class="text-sm text-gray-500 mb-2">
+                                        <span class="inline-flex items-center">
+                                            <i class="fas fa-clock text-gray-400 mr-1"></i>
+                                            {% if video.duration %}
+                                                {{ video.duration|floatformat:"0" }} segundos
+                                            {% else %}
+                                                Duración no especificada
+                                            {% endif %}
+                                        </span>
+                                    </p>
+                                    <p class="text-sm text-gray-600 line-clamp-2">{{ video.description|truncatechars:100 }}</p>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <a href="{% url 'courses:videoclass_detail' video.id %}" class="text-indigo-600 hover:text-indigo-800 p-1">
+                                        <i class="fas fa-play-circle"></i>
+                                    </a>
+                                    <a href="{% url 'courses:videoclass_update' video.id %}" class="text-yellow-600 hover:text-yellow-800 p-1">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'courses:videoclass_delete' video.id %}" class="text-red-600 hover:text-red-800 p-1">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <!-- Etiquetas -->
+                            {% if video.tags %}
+                            <div class="mt-3 flex flex-wrap gap-1">
+                                {% for tag in video.tags.split|slice:":3" %}
+                                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">{{ tag }}</span>
+                                {% endfor %}
+                                {% if video.tags.split|length > 3 %}
+                                    <span class="text-xs text-gray-500">+{{ video.tags.split|length|add:"-3" }}</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Información adicional -->
+                            <div class="mt-3 text-xs text-gray-500 flex items-center">
+                                <span class="flex items-center mr-3">
+                                    <i class="fas {% if video.is_mandatory %}fa-check-circle text-green-500{% else %}fa-circle text-gray-400{% endif %} mr-1"></i>
+                                    {% if video.is_mandatory %}Obligatorio{% else %}Opcional{% endif %}
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas {% if video.is_visible %}fa-eye text-blue-500{% else %}fa-eye-slash text-gray-400{% endif %} mr-1"></i>
+                                    {% if video.is_visible %}Visible{% else %}Oculto{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        {% if session %}
+                            <p class="text-sm text-blue-700">Esta sesión aún no tiene videos. Añade el primer video haciendo clic en "Nuevo Video".</p>
+                        {% else %}
+                            <p class="text-sm text-blue-700">No hay videos disponibles. Selecciona una sesión para añadir nuevos videos.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación (si es necesaria) -->
+    {% if is_paginated %}
+    <div class="mt-4 flex justify-center">
+        <ul class="flex space-x-2">
+            {% if page_obj.has_previous %}
+                <li>
+                    <a href="?page=1" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">&laquo; Primera</a>
+                </li>
+                <li>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Anterior</a>
+                </li>
+            {% endif %}
+
+            <li class="px-3 py-2 bg-indigo-600 text-white rounded-lg">
+                {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </li>
+
+            {% if page_obj.has_next %}
+                <li>
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Siguiente</a>
+                </li>
+                <li>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Última &raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

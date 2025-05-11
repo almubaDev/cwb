@@ -37,6 +37,165 @@
         </div>
     </div>
     
+    <!-- NUEVA SECCIÓN: Contenidos de la sesión -->
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-medium text-gray-800">Contenidos de la sesión</h2>
+        </div>
+
+        <!-- Pestañas de tipo de contenido -->
+        <div class="mb-4 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="content-tabs">
+                <li class="mr-2">
+                    <a href="#video-content" class="inline-block p-4 text-indigo-600 border-b-2 border-indigo-600 rounded-t-lg active content-tab" data-tab="video-content">
+                        <i class="fas fa-video mr-1"></i> Videos
+                    </a>
+                </li>
+                <li class="mr-2">
+                    <a href="#code-content" class="inline-block p-4 text-gray-500 hover:text-gray-600 border-b-2 border-transparent hover:border-gray-300 rounded-t-lg content-tab" data-tab="code-content">
+                        <i class="fas fa-code mr-1"></i> Lecturas de Código
+                    </a>
+                </li>
+                <li class="mr-2">
+                    <span class="inline-block p-4 text-gray-400 rounded-t-lg cursor-not-allowed">
+                        <i class="fas fa-question-circle mr-1"></i> Cuestionarios
+                    </span>
+                </li>
+                <li class="mr-2">
+                    <span class="inline-block p-4 text-gray-400 rounded-t-lg cursor-not-allowed">
+                        <i class="fas fa-tasks mr-1"></i> Ejercicios
+                    </span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Contenedores de contenido -->
+        <div class="content-container">
+            <!-- Contenido de videos -->
+            <div id="video-content" class="py-2 content-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-md font-medium text-gray-700">Videos de la sesión</h3>
+                    <a href="{% url 'courses:videoclass_create' session.id %}" class="text-indigo-600 hover:text-indigo-800 flex items-center">
+                        <i class="fas fa-plus mr-1"></i> Añadir video
+                    </a>
+                </div>
+
+                <!-- Lista de videos -->
+                <div class="space-y-4">
+                    {% with videos=session.contents.all %}
+                        {% if videos %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {% for video in videos %}
+                                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex">
+                                        <div class="w-24 h-16 bg-gray-200 rounded-md overflow-hidden flex-shrink-0 mr-3">
+                                            {% if video.thumbnail %}
+                                                <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                                <div class="w-full h-full flex items-center justify-center">
+                                                    <i class="fas fa-play-circle text-gray-400 text-xl"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="text-sm font-medium text-gray-800 truncate">{{ video.title }}</h4>
+                                            <p class="text-xs text-gray-500 flex items-center">
+                                                <i class="fas fa-clock mr-1"></i> {{ video.duration|default:"0" }} seg
+                                            </p>
+                                            <div class="flex mt-1 space-x-2">
+                                                <a href="{% url 'courses:videoclass_detail' video.id %}" class="text-xs text-indigo-600 hover:text-indigo-800">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'courses:videoclass_update' video.id %}" class="text-xs text-yellow-600 hover:text-yellow-800">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'courses:videoclass_delete' video.id %}" class="text-xs text-red-600 hover:text-red-800">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="text-right mt-2">
+                                <a href="{% url 'courses:videoclass_list' session.id %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+                                    Ver todos los videos <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-info-circle text-blue-500"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-blue-700">Esta sesión aún no tiene videos. Añade el primer video haciendo clic en "Añadir video".</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+            
+            <!-- Contenido de lecturas de código -->
+            <div id="code-content" class="py-2 content-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-md font-medium text-gray-700">Lecturas de Código</h3>
+                    <a href="/code_reading/sessions/{{ session.id }}/readings/create/" class="text-indigo-600 hover:text-indigo-800 flex items-center">
+                        <i class="fas fa-plus mr-1"></i> Añadir Lectura de Código
+                    </a>
+                </div>
+
+                <!-- Lista de lecturas de código -->
+                <div class="space-y-4">
+                    {% with code_readings=session.code_readings.all %}
+                        {% if code_readings %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {% for reading in code_readings %}
+                                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="text-sm font-medium text-gray-800">{{ reading.title }}</h4>
+                                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{{ reading.programming_language }}</span>
+                                        </div>
+                                        
+                                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ reading.description }}</p>
+                                        
+                                        <div class="flex justify-between items-center mt-3">
+                                            <span class="text-xs text-gray-500">
+                                                <i class="fas fa-code-branch mr-1"></i> {{ reading.steps.count }} pasos
+                                            </span>
+                                            
+                                            <div class="flex space-x-2">
+                                                <a href="/code_reading/readings/{{ reading.id }}/" class="text-xs text-indigo-600 hover:text-indigo-800">
+                                                    <i class="fas fa-edit"></i> Gestionar
+                                                </a>
+                                                
+                                                {% if not reading.is_visible %}
+                                                    <span class="text-xs text-gray-500 italic">Oculto</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-info-circle text-blue-500"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-blue-700">Esta sesión aún no tiene lecturas de código. Añade la primera lectura pronto.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
         <h2 class="text-lg font-medium text-gray-800 mb-2">Ruta de navegación</h2>
         <div class="flex flex-wrap items-center text-sm text-gray-600">
@@ -59,6 +218,34 @@
     </div>
 </div>
 
-<!-- Aquí puedes agregar más secciones para los contenidos de la sesión en el futuro -->
-
+<!-- Script para manejar pestañas -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.content-tab');
+    const contentSections = document.querySelectorAll('.content-section');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-tab');
+            
+            // Desactivar todas las pestañas y ocultar todas las secciones
+            tabs.forEach(t => {
+                t.classList.remove('active', 'text-indigo-600', 'border-indigo-600');
+                t.classList.add('text-gray-500', 'border-transparent');
+            });
+            
+            contentSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Activar la pestaña seleccionada y mostrar su contenido
+            this.classList.add('active', 'text-indigo-600', 'border-indigo-600');
+            this.classList.remove('text-gray-500', 'border-transparent');
+            
+            document.getElementById(targetId).classList.remove('hidden');
+        });
+    });
+});
+</script>
 {% endblock %}

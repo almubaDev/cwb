@@ -1,0 +1,196 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}{{ video.title }} | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <div class="flex items-center mb-2">
+            <a href="{% url 'courses:session_detail' video.session.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                <i class="fas fa-arrow-left"></i> Volver a la sesión
+            </a>
+            <h1 class="text-2xl font-bold text-gray-800">{{ video.title }}</h1>
+        </div>
+        <p class="text-sm text-gray-500">
+            Sesión: <a href="{% url 'courses:session_detail' video.session.id %}" class="text-indigo-600 hover:text-indigo-800">{{ video.session.title }}</a> | 
+            Semana: <a href="{% url 'courses:week_detail' video.session.week.id %}" class="text-indigo-600 hover:text-indigo-800">{{ video.session.week.title }}</a> | 
+            Módulo: <a href="{% url 'courses:module_detail' video.session.week.module.id %}" class="text-indigo-600 hover:text-indigo-800">{{ video.session.week.module.title }}</a> | 
+            Curso: <a href="{% url 'courses:course_detail' video.session.week.module.course.id %}" class="text-indigo-600 hover:text-indigo-800">{{ video.session.week.module.course.title }}</a>
+        </p>
+    </div>
+    <div class="flex space-x-2">
+        <a href="{% url 'courses:videoclass_update' video.id %}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-edit mr-1"></i> Editar
+        </a>
+        <a href="{% url 'courses:videoclass_delete' video.id %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-trash-alt mr-1"></i> Eliminar
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
+    <!-- Video Embed -->
+    <div class="aspect-w-16 aspect-h-9">
+        <iframe src="{{ embed_url }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>
+    </div>
+    
+    <!-- Video Info -->
+    <div class="p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">{{ video.title }}</h2>
+                <p class="text-sm text-gray-500">
+                    <span class="inline-block mr-4">
+                        <i class="fas fa-clock mr-1"></i> 
+                        {% if video.duration %}
+                            {{ video.duration|floatformat:"0" }} segundos
+                        {% else %}
+                            Duración no especificada
+                        {% endif %}
+                    </span>
+                    <span class="inline-block mr-4">
+                        <i class="fas fa-server mr-1"></i> 
+                        {{ platform }}
+                    </span>
+                    <span class="inline-block">
+                        <i class="fas fa-calendar-alt mr-1"></i> 
+                        {{ video.created|date:"d/m/Y" }}
+                    </span>
+                </p>
+            </div>
+            <div class="flex items-center space-x-4">
+                {% if video.slides_url %}
+                <a href="{{ video.slides_url }}" target="_blank" class="text-blue-600 hover:text-blue-800 flex items-center">
+                    <i class="fas fa-file-powerpoint mr-1"></i> Diapositivas
+                </a>
+                {% endif %}
+                <a href="{{ video.video_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 flex items-center">
+                    <i class="fas fa-external-link-alt mr-1"></i> Ver en {{ platform }}
+                </a>
+            </div>
+        </div>
+        
+        <!-- Etiquetas -->
+        {% if video.tags %}
+        <div class="mb-4">
+            <p class="text-sm text-gray-600 mb-2">Etiquetas:</p>
+            <div class="flex flex-wrap gap-2">
+                {% for tag in video.tags.split %}
+                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Descripción -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-2">Descripción</h3>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-gray-700 whitespace-pre-line">{{ video.description }}</p>
+            </div>
+        </div>
+        
+        <!-- Transcripción -->
+        {% if video.transcript %}
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-2">Transcripción</h3>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
+                <p class="text-gray-700 whitespace-pre-line">{{ video.transcript }}</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Metadatos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="text-md font-semibold mb-2">Detalles del Contenido</h3>
+                <ul class="space-y-2">
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Nivel de dificultad:</span>
+                        <span class="text-gray-800 font-medium">{{ video.get_difficulty_level_display }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Tiempo estimado:</span>
+                        <span class="text-gray-800 font-medium">{{ video.duration_minutes }} minutos</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Estado:</span>
+                        <span class="font-medium {% if video.is_visible %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if video.is_visible %}Visible{% else %}Oculto{% endif %}
+                        </span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Es obligatorio:</span>
+                        <span class="font-medium {% if video.is_mandatory %}text-green-600{% else %}text-gray-600{% endif %}">
+                            {% if video.is_mandatory %}Sí{% else %}No{% endif %}
+                        </span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Es evaluable:</span>
+                        <span class="font-medium {% if video.is_evaluable %}text-green-600{% else %}text-gray-600{% endif %}">
+                            {% if video.is_evaluable %}Sí{% else %}No{% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="text-md font-semibold mb-2">Información Adicional</h3>
+                <ul class="space-y-2">
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Creado por:</span>
+                        <span class="text-gray-800 font-medium">{{ video.created_by.email }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Fecha de creación:</span>
+                        <span class="text-gray-800 font-medium">{{ video.created|date:"d/m/Y H:i" }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Última actualización:</span>
+                        <span class="text-gray-800 font-medium">{{ video.updated|date:"d/m/Y H:i" }}</span>
+                    </li>
+                    {% if video.available_from or video.available_until %}
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Disponible desde:</span>
+                        <span class="text-gray-800 font-medium">{{ video.available_from|date:"d/m/Y H:i"|default:"Siempre" }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">Disponible hasta:</span>
+                        <span class="text-gray-800 font-medium">{{ video.available_until|date:"d/m/Y H:i"|default:"Siempre" }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navegación entre videos -->
+<div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+    <div class="flex justify-between items-center">
+        {% if prev_video %}
+        <a href="{% url 'courses:videoclass_detail' prev_video.id %}" class="text-indigo-600 hover:text-indigo-800 flex items-center">
+            <i class="fas fa-chevron-left mr-1"></i> Video anterior
+        </a>
+        {% else %}
+        <span class="text-gray-400 cursor-not-allowed">
+            <i class="fas fa-chevron-left mr-1"></i> Video anterior
+        </span>
+        {% endif %}
+        
+        <a href="{% url 'courses:videoclass_list' video.session.id %}" class="text-indigo-600 hover:text-indigo-800">
+            <i class="fas fa-th-list mr-1"></i> Ver todos los videos
+        </a>
+        
+        {% if next_video %}
+        <a href="{% url 'courses:videoclass_detail' next_video.id %}" class="text-indigo-600 hover:text-indigo-800 flex items-center">
+            Video siguiente <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+        {% else %}
+        <span class="text-gray-400 cursor-not-allowed">
+            Video siguiente <i class="fas fa-chevron-right ml-1"></i>
+        </span>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -8,7 +8,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('home.urls')),
     path('users/', include('users.urls')),
-    path('academy/', include('courses.urls')),  # Incluye las URLs de la app courses
+    path('academy/', include('courses.urls')),
+    path('code_reading/', include('code_reading.urls', namespace='code_reading')),
 ]
 
 if settings.DEBUG:

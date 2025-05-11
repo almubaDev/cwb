@@ -2,8 +2,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Course, Module, Week, Session
-from .forms import CourseForm, ModuleForm, WeekForm, SessionForm
+from .models import Course, Module, Week, Session, VideoClass
+from .forms import CourseForm, ModuleForm, WeekForm, SessionForm, VideoClassForm
 
 
 # Añade esta función a views.py
@@ -301,3 +301,100 @@ class SessionDeleteView(LoginRequiredMixin, DeleteView):
     
     def get_success_url(self):
         return reverse_lazy('courses:session_list', kwargs={'week_id': self.object.week.id})
+    
+    
+# VideoClass Views
+class VideoClassListView(ListView):
+    model = VideoClass
+    template_name = 'courses/videoclass_list.html'
+    context_object_name = 'videos'
+    
+    def get_queryset(self):
+        if 'session_id' in self.kwargs:
+            return VideoClass.objects.filter(session_id=self.kwargs['session_id'])
+        return VideoClass.objects.all()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'session_id' in self.kwargs:
+            context['session'] = get_object_or_404(Session, id=self.kwargs['session_id'])
+        return context
+
+
+class VideoClassDetailView(DetailView):
+    model = VideoClass
+    template_name = 'courses/videoclass_detail.html'
+    context_object_name = 'video'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        video = self.get_object()
+        context['embed_url'] = video.get_embed_url()
+        context['platform'] = video.video_platform()
+        
+        # Obtener videos de la misma sesión para navegación
+        context['session_videos'] = VideoClass.objects.filter(
+            session=video.session
+        ).order_by('order')
+        
+        # Obtener el siguiente y anterior video
+        context['next_video'] = video.get_next_content()
+        context['prev_video'] = video.get_previous_content()
+        
+        return context
+
+
+class VideoClassCreateView(LoginRequiredMixin, CreateView):
+    model = VideoClass
+    form_class = VideoClassForm
+    template_name = 'courses/videoclass_form.html'
+    
+    def get_initial(self):
+        initial = {}
+        if 'session_id' in self.kwargs:
+            initial['session'] = self.kwargs['session_id']
+            # Establecer el siguiente orden disponible
+            session = get_object_or_404(Session, id=self.kwargs['session_id'])
+            count = VideoClass.objects.filter(session=session).count()
+            initial['order'] = count + 1
+        return initial
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'session_id' in self.kwargs:
+            context['session'] = get_object_or_404(Session, id=self.kwargs['session_id'])
+        return context
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        if 'session_id' in self.kwargs:
+            return reverse_lazy('courses:videoclass_list', kwargs={'session_id': self.kwargs['session_id']})
+        return reverse_lazy('courses:videoclass_list')
+
+
+class VideoClassUpdateView(LoginRequiredMixin, UpdateView):
+    model = VideoClass
+    form_class = VideoClassForm
+    template_name = 'courses/videoclass_form.html'
+    context_object_name = 'video'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_update'] = True
+        return context
+    
+    def get_success_url(self):
+        return reverse_lazy('courses:videoclass_detail', kwargs={'pk': self.object.pk})
+
+
+class VideoClassDeleteView(LoginRequiredMixin, DeleteView):
+    model = VideoClass
+    template_name = 'courses/videoclass_confirm_delete.html'
+    context_object_name = 'video'
+    
+    def get_success_url(self):
+        session_id = self.object.session.id
+        return reverse_lazy('courses:videoclass_list', kwargs={'session_id': session_id})

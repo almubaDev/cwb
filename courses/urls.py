@@ -35,4 +35,12 @@ urlpatterns = [
     path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session_detail'),
     path('sessions/<int:pk>/update/', views.SessionUpdateView.as_view(), name='session_update'),
     path('sessions/<int:pk>/delete/', views.SessionDeleteView.as_view(), name='session_delete'),
+    
+    # Video Class URLs - generales y específicas por sesión
+    path('videos/', views.VideoClassListView.as_view(), name='videoclass_list'),
+    path('sessions/<int:session_id>/videos/', views.VideoClassListView.as_view(), name='videoclass_list'),
+    path('sessions/<int:session_id>/videos/create/', views.VideoClassCreateView.as_view(), name='videoclass_create'),
+    path('videos/<int:pk>/', views.VideoClassDetailView.as_view(), name='videoclass_detail'),
+    path('videos/<int:pk>/update/', views.VideoClassUpdateView.as_view(), name='videoclass_update'),
+    path('videos/<int:pk>/delete/', views.VideoClassDeleteView.as_view(), name='videoclass_delete'),
 ]
