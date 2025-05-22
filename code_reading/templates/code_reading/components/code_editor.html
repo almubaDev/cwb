@@ -139,7 +139,7 @@ function initializeCodeEditor(blockId) {
     setupEditorButtons(editor, codeBlockData);
     
     // Cargar código guardado del estudiante si existe
-    if (codeBlockData.isEditable && {{ user.role == 'student'|yesno:"true,false" }}) {
+    if (codeBlockData.isEditable && {% if user.role == 'student' %}true{% else %}false{% endif %}) {
         loadStudentCode(blockId);
     }
 }

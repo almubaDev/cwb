@@ -4,219 +4,353 @@
     {% if is_update %}Editar Bloque de Código{% else %}Añadir Bloque de Código{% endif %} | Bootcamp Inteligente
 {% endblock %}
 
-{% block content %}
-<div class="mb-6">
-    <div class="flex items-center mb-4">
-        <a href="{% url 'code_reading:step_detail' step.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
-            <i class="fas fa-arrow-left"></i> Volver al Paso
-        </a>
-        <h1 class="text-2xl font-bold text-gray-800">
-            {% if is_update %}Editar Bloque de Código{% else %}Añadir Bloque de Código{% endif %}
-        </h1>
-    </div>
-    <p class="text-gray-600">
-        {% if is_update %}
-            Modifica el bloque de código para el paso "{{ step.title }}" de la lectura "{{ code_reading.title }}".
-        {% else %}
-            Añade un nuevo bloque de código al paso "{{ step.title }}" de la lectura "{{ code_reading.title }}".
-        {% endif %}
-    </p>
-</div>
-
-<div class="bg-white rounded-lg shadow-md p-6">
-    <form method="post" class="space-y-6" id="codeblock-form">
-        {% csrf_token %}
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Layout dashboard con altura completa */
+    .dashboard-container {
+        height: calc(100vh - 64px); /* Restar altura del navbar */
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .dashboard-header {
+        flex-shrink: 0;
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1rem 0;
+    }
+    
+    .dashboard-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem 0;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+        height: 100%;
+    }
+    
+    .form-main {
+        min-height: 0; /* Important for flex children */
+    }
+    
+    .form-sidebar {
+        background: #f9fafb;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        height: fit-content;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    
+    .editor-container-wrapper {
+        height: 500px; /* Altura fija para el editor */
+        min-height: 500px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 1024px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
         
-        <!-- Información básica -->
-        <div class="border-b border-gray-200 pb-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Información básica</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Step (oculto) -->
-                <input type="hidden" name="step" value="{{ step.id }}">
-                
-                <!-- Lenguaje -->
-                <div>
-                    <label for="{{ form.language.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        {{ form.language.label }}
-                    </label>
-                    {{ form.language }}
-                    {% if form.language.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.language.errors.0 }}</p>
-                    {% endif %}
+        .form-sidebar {
+            max-height: none;
+            height: auto;
+        }
+        
+        .editor-container-wrapper {
+            height: 400px;
+            min-height: 400px;
+        }
+    }
+    
+    /* Mejorar el scroll personalizado */
+    .dashboard-content::-webkit-scrollbar,
+    .form-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .dashboard-content::-webkit-scrollbar-track,
+    .form-sidebar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    
+    .dashboard-content::-webkit-scrollbar-thumb,
+    .form-sidebar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .dashboard-content::-webkit-scrollbar-thumb:hover,
+    .form-sidebar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header fijo -->
+    <div class="dashboard-header">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <a href="{% url 'code_reading:step_detail' step.id %}" class="text-indigo-600 hover:text-indigo-800 mr-3">
+                        <i class="fas fa-arrow-left"></i> Volver al Paso
+                    </a>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">
+                            {% if is_update %}Editar Bloque de Código{% else %}Añadir Bloque de Código{% endif %}
+                        </h1>
+                        <p class="text-sm text-gray-600">
+                            {% if is_update %}
+                                Modifica el bloque de código para el paso "{{ step.title }}"
+                            {% else %}
+                                Añade un nuevo bloque de código al paso "{{ step.title }}"
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
                 
-                <!-- Orden -->
-                <div>
-                    <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        {{ form.order.label }}
-                    </label>
-                    {{ form.order }}
-                    {% if form.order.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.order.errors.0 }}</p>
-                    {% endif %}
+                <!-- Botones de acción en el header -->
+                <div class="flex space-x-3">
+                    <a href="{% url 'code_reading:step_detail' step.id %}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Cancelar
+                    </a>
+                    <button type="submit" form="codeblock-form" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        {% if is_update %}Guardar Cambios{% else %}Añadir Bloque{% endif %}
+                    </button>
                 </div>
             </div>
-            
-            <!-- Código - Reemplazado con Monaco Editor -->
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    {{ form.code.label }}
-                </label>
+        </div>
+    </div>
+    
+    <!-- Contenido con scroll -->
+    <div class="dashboard-content">
+        <div class="container mx-auto px-4">
+            <form method="post" id="codeblock-form">
+                {% csrf_token %}
+                <input type="hidden" name="step" value="{{ step.id }}">
                 
-                <!-- Campo hidden para Django -->
-                {{ form.code.as_hidden }}
-                
-                <!-- Editor Monaco -->
-                <div class="code-editor-container" data-block-id="form-editor">
-                    <!-- Header del editor -->
-                    <div class="bg-gray-800 text-white px-4 py-2 rounded-t-lg flex justify-between items-center">
-                        <div class="flex items-center space-x-3">
-                            <span class="text-sm font-medium" id="editor-language">TEXTO</span>
-                            <span class="bg-blue-600 text-xs px-2 py-1 rounded">Editor</span>
+                <div class="form-grid">
+                    <!-- Columna principal con el editor -->
+                    <div class="form-main space-y-6">
+                        <!-- Editor de código -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-code mr-1"></i>
+                                    {{ form.code.label }}
+                                </label>
+                                
+                                <!-- Campo hidden para Django -->
+                                {{ form.code.as_hidden }}
+                                
+                                <!-- Editor Monaco -->
+                                <div class="editor-container-wrapper">
+                                    <div class="code-editor-container form-editor-wrapper h-full" data-block-id="form-editor">
+                                        <!-- Header del editor -->
+                                        <div class="bg-gray-800 text-white px-4 py-2 rounded-t-lg flex justify-between items-center">
+                                            <div class="flex items-center space-x-3">
+                                                <span class="text-sm font-medium" id="editor-language">TEXTO</span>
+                                                <span class="bg-blue-600 text-xs px-2 py-1 rounded">Editor</span>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <button type="button" id="format-code-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
+                                                    <i class="fas fa-magic mr-1"></i>Formatear
+                                                </button>
+                                                <button type="button" id="validate-syntax-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
+                                                    <i class="fas fa-check mr-1"></i>Validar
+                                                </button>
+                                                <button type="button" id="copy-code-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
+                                                    <i class="fas fa-copy mr-1"></i>Copiar
+                                                </button>
+                                                <button type="button" id="fullscreen-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
+                                                    <i class="fas fa-expand mr-1"></i>Pantalla completa
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Editor de código -->
+                                        <div id="code-editor-form-editor" 
+                                             class="border-l border-r border-b border-gray-300 rounded-b-lg overflow-hidden"
+                                             style="height: calc(100% - 40px);">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if form.code.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.code.errors.0 }}</p>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button type="button" id="copy-code-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
-                                <i class="fas fa-copy mr-1"></i>Copiar
-                            </button>
-                            <button type="button" id="fullscreen-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
-                                <i class="fas fa-expand mr-1"></i>Pantalla completa
-                            </button>
+                        
+                        <!-- Líneas a resaltar -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <label for="{{ form.highlight_lines.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-highlight mr-1"></i>
+                                {{ form.highlight_lines.label }}
+                            </label>
+                            {{ form.highlight_lines }}
+                            {% if form.highlight_lines.help_text %}
+                                <p class="mt-1 text-sm text-gray-500">{{ form.highlight_lines.help_text }}</p>
+                            {% endif %}
+                            {% if form.highlight_lines.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.highlight_lines.errors.0 }}</p>
+                            {% endif %}
                         </div>
                     </div>
                     
-                    <!-- Editor de código -->
-                    <div id="code-editor-form-editor" 
-                         class="border border-gray-300 rounded-b-lg overflow-hidden"
-                         style="height: 400px;">
+                    <!-- Sidebar con configuraciones -->
+                    <div class="form-sidebar">
+                        <!-- Información básica -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-info-circle mr-2 text-indigo-600"></i>
+                                Información básica
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <!-- Lenguaje -->
+                                <div>
+                                    <label for="{{ form.language.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.language.label }}
+                                    </label>
+                                    {{ form.language }}
+                                    {% if form.language.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.language.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Orden -->
+                                <div>
+                                    <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.order.label }}
+                                    </label>
+                                    {{ form.order }}
+                                    {% if form.order.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.order.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Configuración del editor -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-cog mr-2 text-indigo-600"></i>
+                                Configuración del editor
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <!-- Tema -->
+                                <div>
+                                    <label for="{{ form.theme.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.theme.label }}
+                                    </label>
+                                    {{ form.theme }}
+                                    {% if form.theme.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.theme.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Altura -->
+                                <div>
+                                    <label for="{{ form.height.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.height.label }}
+                                    </label>
+                                    {{ form.height }}
+                                    {% if form.height.help_text %}
+                                        <p class="mt-1 text-sm text-gray-500">{{ form.height.help_text }}</p>
+                                    {% endif %}
+                                    {% if form.height.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.height.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Checkboxes de configuración -->
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        {{ form.show_line_numbers }}
+                                        <label for="{{ form.show_line_numbers.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                            {{ form.show_line_numbers.label }}
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-center">
+                                        {{ form.wrap_lines }}
+                                        <label for="{{ form.wrap_lines.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                            {{ form.wrap_lines.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Opciones para estudiantes -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-users mr-2 text-indigo-600"></i>
+                                Opciones para estudiantes
+                            </h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-start">
+                                    {{ form.is_editable }}
+                                    <div class="ml-2">
+                                        <label for="{{ form.is_editable.id_for_label }}" class="text-sm font-medium text-gray-700">
+                                            {{ form.is_editable.label }}
+                                        </label>
+                                        {% if form.is_editable.help_text %}
+                                            <p class="text-sm text-gray-500">{{ form.is_editable.help_text }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start" id="submissions-option" style="display: none;">
+                                    {{ form.allow_student_submissions }}
+                                    <div class="ml-2">
+                                        <label for="{{ form.allow_student_submissions.id_for_label }}" class="text-sm font-medium text-gray-700">
+                                            {{ form.allow_student_submissions.label }}
+                                        </label>
+                                        {% if form.allow_student_submissions.help_text %}
+                                            <p class="text-sm text-gray-500">{{ form.allow_student_submissions.help_text }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Vista previa de configuración -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-blue-800 mb-2">
+                                <i class="fas fa-eye mr-1"></i>
+                                Vista previa
+                            </h4>
+                            <div class="text-xs text-blue-700 space-y-1">
+                                <div>Tema: <span id="preview-theme">vs-dark</span></div>
+                                <div>Altura: <span id="preview-height">400</span>px</div>
+                                <div>Números de línea: <span id="preview-linenumbers">Activado</span></div>
+                                <div>Ajuste de líneas: <span id="preview-wrap">Desactivado</span></div>
+                                <div>Estado: <span id="preview-editable">Solo lectura</span></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                {% if form.code.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.code.errors.0 }}</p>
-                {% endif %}
-            </div>
-            
-            <!-- Líneas a resaltar -->
-            <div class="mt-4">
-                <label for="{{ form.highlight_lines.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                    {{ form.highlight_lines.label }}
-                </label>
-                {{ form.highlight_lines }}
-                {% if form.highlight_lines.help_text %}
-                    <p class="mt-1 text-sm text-gray-500">{{ form.highlight_lines.help_text }}</p>
-                {% endif %}
-                {% if form.highlight_lines.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.highlight_lines.errors.0 }}</p>
-                {% endif %}
-            </div>
+            </form>
         </div>
-        
-        <!-- Configuración del editor -->
-        <div class="border-b border-gray-200 pb-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Configuración del editor</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Tema -->
-                <div>
-                    <label for="{{ form.theme.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        {{ form.theme.label }}
-                    </label>
-                    {{ form.theme }}
-                    {% if form.theme.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.theme.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- Altura -->
-                <div>
-                    <label for="{{ form.height.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        {{ form.height.label }}
-                    </label>
-                    {{ form.height }}
-                    {% if form.height.help_text %}
-                        <p class="mt-1 text-sm text-gray-500">{{ form.height.help_text }}</p>
-                    {% endif %}
-                    {% if form.height.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.height.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Checkboxes de configuración -->
-            <div class="mt-4 space-y-3">
-                <div class="flex items-center">
-                    {{ form.show_line_numbers }}
-                    <label for="{{ form.show_line_numbers.id_for_label }}" class="ml-2 text-sm text-gray-700">
-                        {{ form.show_line_numbers.label }}
-                    </label>
-                    {% if form.show_line_numbers.errors %}
-                        <p class="ml-2 text-sm text-red-600">{{ form.show_line_numbers.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <div class="flex items-center">
-                    {{ form.wrap_lines }}
-                    <label for="{{ form.wrap_lines.id_for_label }}" class="ml-2 text-sm text-gray-700">
-                        {{ form.wrap_lines.label }}
-                    </label>
-                    {% if form.wrap_lines.errors %}
-                        <p class="ml-2 text-sm text-red-600">{{ form.wrap_lines.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Opciones para estudiantes -->
-        <div class="pb-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Opciones para estudiantes</h3>
-            
-            <div class="space-y-3">
-                <div class="flex items-start">
-                    {{ form.is_editable }}
-                    <div class="ml-2">
-                        <label for="{{ form.is_editable.id_for_label }}" class="text-sm font-medium text-gray-700">
-                            {{ form.is_editable.label }}
-                        </label>
-                        {% if form.is_editable.help_text %}
-                            <p class="text-sm text-gray-500">{{ form.is_editable.help_text }}</p>
-                        {% endif %}
-                        {% if form.is_editable.errors %}
-                            <p class="text-sm text-red-600">{{ form.is_editable.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="flex items-start" id="submissions-option" style="display: none;">
-                    {{ form.allow_student_submissions }}
-                    <div class="ml-2">
-                        <label for="{{ form.allow_student_submissions.id_for_label }}" class="text-sm font-medium text-gray-700">
-                            {{ form.allow_student_submissions.label }}
-                        </label>
-                        {% if form.allow_student_submissions.help_text %}
-                            <p class="text-sm text-gray-500">{{ form.allow_student_submissions.help_text }}</p>
-                        {% endif %}
-                        {% if form.allow_student_submissions.errors %}
-                            <p class="text-sm text-red-600">{{ form.allow_student_submissions.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Botones -->
-        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <a href="{% url 'code_reading:step_detail' step.id %}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Cancelar
-            </a>
-            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {% if is_update %}Guardar Cambios{% else %}Añadir Bloque{% endif %}
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
 
-<!-- JavaScript para manejo del formulario con Monaco Editor -->
+<!-- JavaScript mejorado para el manejo del formulario -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let formEditor = null;
@@ -240,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Configuración inicial del editor
         const initialConfig = {
-            value: codeField.value || '',
+            value: codeField.value || '// Escribe tu código aquí\n',
             language: getMonacoLanguage(languageField.value || 'text'),
             theme: themeField.value || 'vs-dark',
             lineNumbers: showLineNumbersField.checked ? 'on' : 'off',
@@ -250,7 +384,20 @@ document.addEventListener('DOMContentLoaded', function() {
             automaticLayout: true,
             fontSize: 14,
             lineHeight: 20,
-            padding: { top: 10, bottom: 10 }
+            padding: { top: 10, bottom: 10 },
+            contextmenu: true,
+            selectOnLineNumbers: true,
+            roundedSelection: false,
+            renderIndentGuides: true,
+            cursorStyle: 'line',
+            wordBasedSuggestions: true,
+            suggestOnTriggerCharacters: true,
+            acceptSuggestionOnEnter: 'on',
+            quickSuggestions: true,
+            parameterHints: { enabled: true },
+            folding: true,
+            foldingStrategy: 'indentation',
+            showFoldingControls: 'always'
         };
         
         // Crear editor
@@ -262,6 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Sincronizar con el campo del formulario
         formEditor.onDidChangeModelContent(function() {
             codeField.value = formEditor.getValue();
+            window.CodeEditorUtils.validateFormField(codeField.id, codeField.value);
         });
         
         // Actualizar lenguaje cuando cambie el select
@@ -269,11 +417,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const newLanguage = getMonacoLanguage(this.value);
             monaco.editor.setModelLanguage(formEditor.getModel(), newLanguage);
             updateLanguageDisplay(this.value);
+            updatePreview();
         });
         
         // Actualizar tema cuando cambie
         themeField.addEventListener('change', function() {
             monaco.editor.setTheme(this.value);
+            updatePreview();
         });
         
         // Actualizar números de línea
@@ -281,6 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formEditor.updateOptions({
                 lineNumbers: this.checked ? 'on' : 'off'
             });
+            updatePreview();
         });
         
         // Actualizar ajuste de líneas
@@ -288,13 +439,13 @@ document.addEventListener('DOMContentLoaded', function() {
             formEditor.updateOptions({
                 wordWrap: this.checked ? 'on' : 'off'
             });
+            updatePreview();
         });
         
         // Actualizar altura
         heightField.addEventListener('change', function() {
-            const editorContainer = document.getElementById('code-editor-form-editor');
-            editorContainer.style.height = this.value + 'px';
-            formEditor.layout();
+            // La altura se maneja por CSS en este layout
+            updatePreview();
         });
         
         // Configurar botones
@@ -303,14 +454,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Configurar opciones dependientes
         setupDependentOptions();
         
-        // Actualizar display inicial del lenguaje
+        // Actualizar display inicial
         updateLanguageDisplay(languageField.value);
+        updatePreview();
         
-        // Sincronizar el contenido inicial del editor con el formulario antes de enviar
-        const form = document.getElementById('codeblock-form');
-        form.addEventListener('submit', function() {
-            codeField.value = formEditor.getValue();
-        });
+        // Guardar referencia del editor
+        window.formEditors = window.formEditors || {};
+        window.formEditors['form-editor'] = formEditor;
     }
     
     function getMonacoLanguage(formLanguage) {
@@ -338,7 +488,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function updatePreview() {
+        const themeField = document.getElementById('{{ form.theme.id_for_label }}');
+        const heightField = document.getElementById('{{ form.height.id_for_label }}');
+        const showLineNumbersField = document.getElementById('{{ form.show_line_numbers.id_for_label }}');
+        const wrapLinesField = document.getElementById('{{ form.wrap_lines.id_for_label }}');
+        const isEditableField = document.getElementById('{{ form.is_editable.id_for_label }}');
+        
+        document.getElementById('preview-theme').textContent = themeField.value;
+        document.getElementById('preview-height').textContent = heightField.value;
+        document.getElementById('preview-linenumbers').textContent = showLineNumbersField.checked ? 'Activado' : 'Desactivado';
+        document.getElementById('preview-wrap').textContent = wrapLinesField.checked ? 'Activado' : 'Desactivado';
+        document.getElementById('preview-editable').textContent = isEditableField.checked ? 'Editable' : 'Solo lectura';
+    }
+    
     function setupEditorButtons() {
+        // Botón formatear
+        const formatBtn = document.getElementById('format-code-form');
+        if (formatBtn) {
+            formatBtn.addEventListener('click', function() {
+                if (formEditor) {
+                    formEditor.getAction('editor.action.formatDocument').run();
+                    window.CodeEditorUtils.showToast('Código formateado', 'success');
+                }
+            });
+        }
+        
+        // Botón validar
+        const validateBtn = document.getElementById('validate-syntax-form');
+        if (validateBtn) {
+            validateBtn.addEventListener('click', function() {
+                window.CodeEditorUtils.validateSyntax('form-editor');
+            });
+        }
+        
         // Botón copiar
         const copyBtn = document.getElementById('copy-code-form');
         if (copyBtn) {
@@ -396,6 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 submissionsOption.style.display = 'none';
                 document.getElementById('{{ form.allow_student_submissions.id_for_label }}').checked = false;
             }
+            updatePreview();
         }
         
         // Ejecutar al cargar la página
@@ -404,6 +588,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Ejecutar cuando cambie el checkbox
         isEditableCheckbox.addEventListener('change', toggleSubmissionsOption);
     }
+    
+    // Sincronizar antes del envío del formulario
+    document.getElementById('codeblock-form').addEventListener('submit', function() {
+        if (formEditor) {
+            const codeField = document.getElementById('{{ form.code.id_for_label }}');
+            codeField.value = formEditor.getValue();
+        }
+    });
 });
 </script>
 {% endblock %}
