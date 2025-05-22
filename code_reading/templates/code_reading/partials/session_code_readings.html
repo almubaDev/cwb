@@ -1,0 +1,46 @@
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Lecturas de Código ({{ code_readings.count }})</h2>
+        <a href="{% url 'code_reading:codereading_create' session.id %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-plus mr-2"></i> Nueva Lectura de Código
+        </a>
+    </div>
+
+    {% if code_readings %}
+        <div class="space-y-4">
+            {% for reading in code_readings %}
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-md font-semibold text-gray-800">{{ reading.order }}. {{ reading.title }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">{{ reading.description|truncatewords:15 }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Lenguaje: {{ reading.programming_language }} | Pasos: {{ reading.get_steps_count }}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <a href="{% url 'code_reading:codereading_detail' reading.id %}" class="text-indigo-600 hover:text-indigo-800" title="Ver Detalles">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'code_reading:codereading_update' reading.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'code_reading:codereading_delete' reading.id %}" class="text-red-600 hover:text-red-800" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">No hay lecturas de código para esta sesión. Haz clic en "Nueva Lectura de Código" para añadir una.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>

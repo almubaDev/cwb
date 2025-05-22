@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Instalar Python en Windows</title>
+    <style>
+        /* Paleta de Colores Python-Like:
+           Azul Python: #306998 / #4B8BBE
+           Amarillo Python: #FFD43B / #FFE873
+           Gris Oscuro (texto): #333
+           Gris Claro (fondo): #f4f4f4
+           Blanco: #fff
+        */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 50px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        h1, h2 {
+            color: #306998; /* Azul Python */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #FFD43B; /* Amarillo Python */
+            padding-bottom: 10px;
+        }
+
+        .step {
+            display: none; /* Ocultar todos los pasos inicialmente */
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .step.active {
+            display: block; /* Mostrar el paso activo */
+        }
+
+        .step img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .nav-button {
+            background-color: #4B8BBE; /* Azul Python más claro */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background-color: #306998; /* Azul Python */
+        }
+
+        .nav-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .important-note {
+            background-color: #FFF3CD; /* Amarillo Python muy claro */
+            border-left: 5px solid #FFD43B; /* Amarillo Python */
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .important-note strong {
+            color: #856404; /* Texto más oscuro para el amarillo */
+        }
+        
+        .image-disclaimer {
+            font-size: 0.8em;
+            color: #777;
+            text-align: center;
+            margin-top: -5px;
+            margin-bottom: 10px;
+        }
+
+        code {
+            background-color: #e8e8e8;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%; /* Se actualizará con JS */
+            height: 20px;
+            background-color: #4B8BBE; /* Azul Python */
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            font-size: 12px;
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tutorial Interactivo: Instalar Python en Windows</h1>
+        <p style="text-align:center; font-size:0.9em; color:#555;">
+            <em>Nota: Las imágenes enlazadas son de fuentes públicas y podrían cambiar o no estar disponibles en el futuro. Para mayor fiabilidad, considera reemplazarlas con tus propias capturas.</em>
+        </p>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <div id="tutorial-steps">
+            <!-- Paso 0: Introducción -->
+            <div class="step active">
+                <h2>Paso 0: Introducción</h2>
+                <p>¡Bienvenido! Este tutorial te guiará paso a paso para instalar Python en tu sistema operativo Windows. Python es un lenguaje de programación versátil y popular, ideal tanto para principiantes como para desarrolladores experimentados.</p>
+                <p>Sigue las instrucciones cuidadosamente. Haz clic en "Siguiente" para comenzar.</p>
+            </div>
+
+            <!-- Paso 1: Descargar Python -->
+            <div class="step">
+                <h2>Paso 1: Descargar el Instalador de Python</h2>
+                <p>Primero, necesitas descargar el instalador oficial de Python.</p>
+                <ol>
+                    <li>Abre tu navegador web y ve a la página oficial de Python: <a href="https://www.python.org/downloads/windows/" target="_blank">python.org/downloads/windows/</a></li>
+                    <li>Busca la última versión estable de Python para Windows. Generalmente, estará destacada en la parte superior. Haz clic en el enlace de descarga para "Windows installer (64-bit)" si tienes un sistema de 64 bits (la mayoría de los modernos), o el de 32 bits si es necesario.</li>
+                </ol>
+                <img src="https://www.python.org/static/community_images/python-logo.png" alt="Logo de Python, representativo de la página de descarga">
+                <p class="image-disclaimer">(Imagen ilustrativa del logo de Python. Visita el enlace para ver la página de descargas real.)</p>
+                <p>Guarda el archivo <code>.exe</code> en una ubicación fácil de recordar, como tu carpeta de "Descargas".</p>
+            </div>
+
+            <!-- Paso 2: Ejecutar el Instalador -->
+            <div class="step">
+                <h2>Paso 2: Ejecutar el Instalador</h2>
+                <p>Una vez descargado el archivo <code>.exe</code> (por ejemplo, <code>python-3.X.Y-amd64.exe</code>), haz doble clic sobre él para iniciar el proceso de instalación.</p>
+                <img src="https://i.imgur.com/xXfNUIg.png" alt="Ejecutando el instalador de Python desde el explorador de archivos">
+                 <p class="image-disclaimer">(Ejemplo de un archivo instalador .exe en el explorador)</p>
+                <p>Aparecerá la primera pantalla del instalador de Python.</p>
+            </div>
+
+            <!-- Paso 3: Configuración Inicial (MUY IMPORTANTE) -->
+            <div class="step">
+                <h2>Paso 3: Configuración Inicial (¡MUY IMPORTANTE!)</h2>
+                <p>Esta es una de las pantallas más importantes. Asegúrate de marcar dos casillas clave:</p>
+                <ul>
+                    <li><strong>"Install launcher for all users (recommended)"</strong>: Suele estar marcada por defecto.</li>
+                    <li><strong>"Add Python X.Y to PATH"</strong>: ¡Esta es crucial! Marcar esta opción te permitirá ejecutar Python desde cualquier parte de la línea de comandos (CMD o PowerShell) sin tener que especificar la ruta completa al ejecutable.</li>
+                </ul>
+                <div class="important-note">
+                    <strong>¡Atención!</strong> Si olvidas marcar "Add Python X.Y to PATH", tendrás que configurarlo manualmente más tarde, lo cual puede ser un poco más complicado.
+                </div>
+                <img src="https://learn.microsoft.com/es-es/windows/python/images/python-installer.png" alt="Pantalla inicial del instalador de Python con 'Add to PATH' destacado">
+                <p class="image-disclaimer">(Fuente: Microsoft Docs - Instalador de Python)</p>
+                <p>Después de marcar estas casillas, puedes hacer clic en "<strong>Install Now</strong>" para una instalación estándar con las opciones recomendadas, lo cual es suficiente para la mayoría de los usuarios. Si deseas personalizar la ubicación o los componentes, puedes elegir "Customize installation". Para este tutorial, asumiremos "Install Now".</p>
+            </div>
+
+            <!-- Paso 4: Proceso de Instalación -->
+            <div class="step">
+                <h2>Paso 4: Proceso de Instalación</h2>
+                <p>El instalador comenzará a copiar los archivos necesarios y configurar Python en tu sistema. Verás una barra de progreso.</p>
+                <img src="https://www.ict.social/images/2019/11/28/python-windows-install-progress.png" alt="Progreso de la instalación de Python">
+                <p class="image-disclaimer">(Fuente: ICT.social - Barra de progreso de instalación de Python)</p>
+                <p>Este proceso puede tardar unos minutos. ¡Ten paciencia!</p>
+                <p>Si aparece una ventana de Control de Cuentas de Usuario (UAC) preguntando si permites que la aplicación haga cambios en tu dispositivo, haz clic en "Sí".</p>
+            </div>
+
+            <!-- Paso 5: Instalación Completada -->
+            <div class="step">
+                <h2>Paso 5: Instalación Completada</h2>
+                <p>Una vez finalizada la instalación, verás un mensaje indicando "Setup was successful".</p>
+                <img src="https://learn.microsoft.com/es-es/windows/python/images/python-installer-success.png" alt="Pantalla de instalación de Python completada">
+                <p class="image-disclaimer">(Fuente: Microsoft Docs - Instalación de Python exitosa)</p>
+                <p>En esta pantalla, también podrías ver una opción para "Disable path length limit". Es recomendable hacer clic en ella si aparece, ya que elimina una limitación antigua de Windows sobre la longitud máxima de las rutas de archivo, lo que puede causar problemas con algunos proyectos de Python. Si no aparece, no te preocupes.</p>
+                <p>Haz clic en "<strong>Close</strong>" para cerrar el instalador.</p>
+            </div>
+
+            <!-- Paso 6: Verificar la Instalación -->
+            <div class="step">
+                <h2>Paso 6: Verificar la Instalación</h2>
+                <p>Para asegurarte de que Python se ha instalado correctamente y está accesible desde la línea de comandos, vamos a verificarlo.</p>
+                <ol>
+                    <li>Abre una nueva ventana de Símbolo del sistema (CMD) o PowerShell. Puedes buscar "cmd" o "powershell" en el menú de inicio.</li>
+                    <li>Escribe el siguiente comando y presiona Enter:
+                        <br><code>python --version</code>
+                    </li>
+                </ol>
+                <p>Deberías ver la versión de Python que acabas de instalar (por ejemplo, <code>Python 3.X.Y</code>).</p>
+                <img src="https://www.pythonforbeginners.com/wp-content/uploads/Check-Python-Version-on-Windows.png" alt="Verificación de la versión de Python en CMD">
+                <p class="image-disclaimer">(Fuente: PythonForBeginners.com - Verificar versión de Python)</p>
+                
+                <p>También puedes verificar la instalación de <code>pip</code>, el gestor de paquetes de Python, que se instala automáticamente:</p>
+                <ol start="3">
+                    <li>En la misma ventana de CMD o PowerShell, escribe:
+                        <br><code>pip --version</code>
+                    </li>
+                </ol>
+                <p>Deberías ver la versión de pip y la ruta donde está instalado.</p>
+                <img src="https://i.stack.imgur.com/A52E4.png" alt="Verificación de la versión de pip en CMD">
+                <p class="image-disclaimer">(Fuente: Stack Overflow - Verificar versión de pip)</p>
+                <div class="important-note">
+                    Si alguno de estos comandos no funciona (por ejemplo, dice "'python' no se reconoce..."), es probable que la opción "Add Python to PATH" no se haya marcado correctamente durante la instalación o que necesites reiniciar tu PC (o al menos cerrar y volver a abrir todas las ventanas de terminal).
+                </div>
+            </div>
+
+            <!-- Paso 7: ¡Felicidades! -->
+            <div class="step">
+                <h2>Paso 7: ¡Felicidades!</h2>
+                <p>¡Has instalado Python exitosamente en tu sistema Windows!</p>
+                <p>Ahora estás listo para empezar a programar en Python. Puedes ejecutar scripts, usar el intérprete interactivo (escribiendo <code>python</code> en la terminal y presionando Enter) o instalar paquetes adicionales usando <code>pip</code>.</p>
+                <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-master-v3-TM.png" alt="Logo de Python">
+                <p class="image-disclaimer">(Fuente: Python.org - Logo oficial)</p>
+                <p>Algunos próximos pasos podrían ser:</p>
+                <ul>
+                    <li>Elegir un editor de código o IDE (como VS Code, PyCharm, Sublime Text).</li>
+                    <li>Comenzar un curso de Python para principiantes.</li>
+                    <li>Explorar la documentación oficial de Python.</li>
+                </ul>
+                <p>¡Disfruta tu viaje con Python!</p>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button id="prevButton" class="nav-button" onclick="navigate(-1)">Anterior</button>
+            <button id="nextButton" class="nav-button" onclick="navigate(1)">Siguiente</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const steps = document.querySelectorAll('#tutorial-steps .step');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const progressBar = document.getElementById('progressBar');
+        const totalSteps = steps.length;
+
+        function showStep(stepIndex) {
+            steps.forEach((step, index) => {
+                step.classList.toggle('active', index === stepIndex);
+            });
+
+            prevButton.disabled = stepIndex === 0;
+            nextButton.disabled = stepIndex === totalSteps - 1;
+            
+            if (stepIndex === totalSteps - 1) {
+                nextButton.textContent = "Finalizar";
+            } else {
+                nextButton.textContent = "Siguiente";
+            }
+            
+            const progressPercentage = totalSteps > 1 ? (stepIndex / (totalSteps - 1)) * 100 : (stepIndex === 0 ? 0 : 100);
+            progressBar.style.width = progressPercentage + '%';
+            progressBar.textContent = Math.round(progressPercentage) + '%';
+        }
+
+        function navigate(direction) {
+            const newStep = currentStep + direction;
+            if (newStep >= 0 && newStep < totalSteps) {
+                currentStep = newStep;
+                showStep(currentStep);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (steps.length > 0) {
+                showStep(currentStep);
+            } else {
+                console.error("No se encontraron pasos para el tutorial.");
+                const tutorialStepsContainer = document.getElementById('tutorial-steps');
+                if (tutorialStepsContainer) {
+                    tutorialStepsContainer.innerHTML = "<p>Error: No se pudieron cargar los pasos del tutorial.</p>";
+                }
+                if (prevButton) prevButton.style.display = 'none';
+                if (nextButton) nextButton.style.display = 'none';
+                if (progressBar && progressBar.parentElement) progressBar.parentElement.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

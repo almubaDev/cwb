@@ -1,0 +1,120 @@
+{% extends "courses/courses_base.html" %}
+
+{% block title %}Paso {{ step.order }}: {{ step.title }} | Lectura de Código | Bootcamp Inteligente{% endblock %}
+
+{% block courses_content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <div class="flex items-center mb-2">
+            <a href="{% url 'code_reading:codereading_detail' step.code_reading.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
+                <i class="fas fa-arrow-left"></i> Volver a Lectura de Código
+            </a>
+            <h1 class="text-2xl font-bold text-gray-800">Paso {{ step.order }}: {{ step.title }}</h1>
+        </div>
+        <p class="text-sm text-gray-500">
+            Lectura de Código: <a href="{% url 'code_reading:codereading_detail' step.code_reading.id %}" class="text-indigo-600 hover:text-indigo-800">{{ step.code_reading.title }}</a> | 
+            Descripción: {{ step.description|default:"Sin descripción" }}
+        </p>
+    </div>
+    <div class="flex space-x-2">
+        <a href="{% url 'code_reading:step_update' step.id %}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-edit mr-1"></i> Editar Paso
+        </a>
+        <a href="{% url 'code_reading:step_delete' step.id %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg flex items-center">
+            <i class="fas fa-trash-alt mr-1"></i> Eliminar Paso
+        </a>
+    </div>
+</div>
+
+<!-- Contenedor de Bloques (Diseño de dos columnas) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <!-- Columna Izquierda: Bloques de Código -->
+    <div class="bg-gray-100 p-4 rounded-lg border border-gray-300">
+        <div class="flex justify-between items-center mb-3">
+            <h4 class="text-md font-semibold text-gray-700">Bloques de Código ({{ code_blocks.count }})</h4>
+            <a href="{% url 'code_reading:codeblock_create' step.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+                <i class="fas fa-plus mr-1"></i> Añadir Código
+            </a>
+        </div>
+        <div class="space-y-3">
+            {% for code_block in code_blocks %}
+                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-800">Código {{ code_block.order }} ({{ code_block.language }})</p>
+                        <div class="flex space-x-2">
+                            <a href="{% url 'code_reading:codeblock_update' code_block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Código">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'code_reading:codeblock_delete' code_block.id %}" class="text-red-600 hover:text-red-800" title="Eliminar Código">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <pre class="bg-gray-800 text-white p-2 rounded text-xs overflow-x-auto mt-2">{{ code_block.code|truncatechars:100 }}</pre>
+                    {% if code_block.highlight_lines %}
+                        <p class="text-xs text-gray-500 mt-1">Líneas a resaltar: {{ code_block.highlight_lines }}</p>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-sm text-gray-500">No hay bloques de código en este paso.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Explicaciones y Preguntas -->
+    <div class="bg-gray-100 p-4 rounded-lg border border-gray-300">
+        <div class="flex justify-between items-center mb-3">
+            <h4 class="text-md font-semibold text-gray-700">Explicaciones y Preguntas ({{ explanation_blocks.count|add:question_blocks.count }})</h4>
+            <div class="flex space-x-2">
+                <a href="{% url 'code_reading:explanation_create' step.id %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+                    <i class="fas fa-plus mr-1"></i> Explicación
+                </a>
+                <a href="{% url 'code_reading:question_create' step.id %}" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+                    <i class="fas fa-plus mr-1"></i> Pregunta
+                </a>
+            </div>
+        </div>
+        <div class="space-y-3">
+            {% for block in explanation_blocks|add:question_blocks|dictsort:"order" %}
+                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        {% if block.question_text %}
+                            <p class="text-sm font-medium text-gray-800">Pregunta {{ block.order }}</p>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'code_reading:question_update' block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Pregunta">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'code_reading:question_delete' block.id %}" class="text-red-600 hover:text-red-800" title="Eliminar Pregunta">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="text-sm font-medium text-gray-800">Explicación {{ block.order }}</p>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'code_reading:explanation_update' block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Explicación">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'code_reading:explanation_delete' block.id %}" class="text-red-600 hover:text-red-800" title="Eliminar Explicación">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">
+                        {% if block.question_text %}
+                            {{ block.question_text|truncatechars:100 }}
+                        {% else %}
+                            {{ block.content|truncatechars:100 }}
+                        {% endif %}
+                    </p>
+                    {% if block.related_code_block %}
+                        <p class="text-xs text-gray-500 mt-1">Relacionado con Código {{ block.related_code_block.order }}</p>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-sm text-gray-500">No hay explicaciones o preguntas en este paso.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

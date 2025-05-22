@@ -16,9 +16,27 @@ class CodeReading(ContentItem):
         verbose_name="Descripción",
         blank=True
     )
+    PROGRAMMING_LANGUAGE_CHOICES = [
+        ('python', 'Python'),
+        ('javascript', 'JavaScript'),
+        ('java', 'Java'),
+        ('csharp', 'C#'),
+        ('cpp', 'C++'),
+        ('php', 'PHP'),
+        ('ruby', 'Ruby'),
+        ('go', 'Go'),
+        ('swift', 'Swift'),
+        ('typescript', 'TypeScript'),
+        ('html', 'HTML'),
+        ('css', 'CSS'),
+        ('sql', 'SQL'),
+        ('bash', 'Bash/Shell'),
+        ('other', 'Otro'),
+    ]
     programming_language = models.CharField(
         max_length=50,
         verbose_name="Lenguaje de Programación",
+        choices=PROGRAMMING_LANGUAGE_CHOICES,
         default="python",
         help_text="Lenguaje de programación principal del código"
     )

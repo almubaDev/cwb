@@ -31,24 +31,6 @@ class CodeReadingForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Personalizar las opciones de lenguajes de programación
-        self.fields['programming_language'].choices = [
-            ('python', 'Python'),
-            ('javascript', 'JavaScript'),
-            ('java', 'Java'),
-            ('csharp', 'C#'),
-            ('cpp', 'C++'),
-            ('php', 'PHP'),
-            ('ruby', 'Ruby'),
-            ('go', 'Go'),
-            ('swift', 'Swift'),
-            ('typescript', 'TypeScript'),
-            ('html', 'HTML'),
-            ('css', 'CSS'),
-            ('sql', 'SQL'),
-            ('bash', 'Bash/Shell'),
-            ('other', 'Otro'),
-        ]
 
     def save(self, commit=True):
         instance = super().save(commit=False)
