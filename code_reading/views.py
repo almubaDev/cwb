@@ -212,7 +212,26 @@ class CodeBlockCreateView(LoginRequiredMixin, CreateView):
             step = get_object_or_404(CodeReadingStep, id=self.kwargs['step_id'])
             context['step'] = step
             context['code_reading'] = step.code_reading
+            
+            # NUEVO: Agregar configuración para el editor
+            context['editor_config'] = {
+                'language': 'text',
+                'theme': 'vs-dark',
+                'height': 400,
+                'show_line_numbers': True,
+                'wrap_lines': False,
+                'is_editable': True
+            }
         return context
+    
+    def form_valid(self, form):
+        # Validación adicional para asegurar que el código no esté vacío
+        if not form.cleaned_data.get('code', '').strip():
+            form.add_error('code', 'El código no puede estar vacío.')
+            return self.form_invalid(form)
+        
+        messages.success(self.request, 'Bloque de código creado exitosamente.')
+        return super().form_valid(form)
     
     def get_success_url(self):
         return reverse_lazy('code_reading:step_detail', kwargs={'pk': self.object.step.pk})
@@ -229,7 +248,28 @@ class CodeBlockUpdateView(LoginRequiredMixin, UpdateView):
         context['is_update'] = True
         context['step'] = self.object.step
         context['code_reading'] = self.object.step.code_reading
+        
+        # NUEVO: Agregar configuración actual del editor
+        context['editor_config'] = {
+            'language': self.object.language,
+            'theme': self.object.theme,
+            'height': self.object.height,
+            'show_line_numbers': self.object.show_line_numbers,
+            'wrap_lines': self.object.wrap_lines,
+            'is_editable': True,
+            'code': self.object.code,
+            'highlight_lines': self.object.highlight_lines
+        }
         return context
+    
+    def form_valid(self, form):
+        # Validación adicional
+        if not form.cleaned_data.get('code', '').strip():
+            form.add_error('code', 'El código no puede estar vacío.')
+            return self.form_invalid(form)
+            
+        messages.success(self.request, 'Bloque de código actualizado exitosamente.')
+        return super().form_valid(form)
     
     def get_success_url(self):
         return reverse_lazy('code_reading:step_detail', kwargs={'pk': self.object.step.pk})
@@ -239,6 +279,10 @@ class CodeBlockDeleteView(LoginRequiredMixin, DeleteView):
     model = CodeBlock
     template_name = 'code_reading/codeblock_confirm_delete.html'
     context_object_name = 'code_block'
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Bloque de código eliminado exitosamente.')
+        return super().delete(request, *args, **kwargs)
     
     def get_success_url(self):
         return reverse_lazy('code_reading:step_detail', kwargs={'pk': self.object.step.pk})
@@ -1039,7 +1083,8 @@ def save_student_code_api(request):
             'message': 'Enviado correctamente' if is_final_submission else 'Guardado correctamente',
             'feedback': feedback,
             'submission_id': submission.id,
-            'is_final': submission.is_final_submission
+            'is_final': submission.is_final_submission,
+            'last_updated': submission.updated.isoformat()
         })
         
     except json.JSONDecodeError:

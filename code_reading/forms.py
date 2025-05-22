@@ -4,15 +4,6 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from .models import (
     CodeReading, CodeReadingStep, CodeBlock, 
-    ExplanationBlock, QuestionBlock, StudentResponse
-)
-
-# code_reading/forms.py
-from django import forms
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-from .models import (
-    CodeReading, CodeReadingStep, CodeBlock, 
     ExplanationBlock, QuestionBlock, StudentResponse, StudentCodeSubmission
 )
 
@@ -87,11 +78,10 @@ class CodeBlockForm(forms.ModelForm):
         ]
         widgets = {
             'step': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
-            'code': forms.Textarea(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono', 
-                'rows': 15,
-                'placeholder': 'Escribe tu código aquí...',
-                'style': 'font-family: "Courier New", Courier, monospace;'
+            # CAMBIADO: Widget para código compatible con Monaco Editor
+            'code': forms.HiddenInput(attrs={
+                'id': 'id_code',
+                'data-editor': 'true'
             }),
             'language': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
             'order': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
@@ -105,7 +95,7 @@ class CodeBlockForm(forms.ModelForm):
                 'min': '200',
                 'max': '800',
                 'step': '50',
-                'value': '300'
+                'value': '400'
             }),
             'is_editable': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
             'show_line_numbers': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
@@ -123,6 +113,11 @@ class CodeBlockForm(forms.ModelForm):
             if not self.instance.pk:  # Si es un objeto nuevo
                 next_order = CodeBlock.objects.filter(step=step).count() + 1
                 self.fields['order'].initial = next_order
+                # Establecer valores por defecto para nuevo bloque
+                self.fields['height'].initial = 400
+                self.fields['theme'].initial = 'vs-dark'
+                self.fields['show_line_numbers'].initial = True
+                self.fields['language'].initial = 'text'
 
     def clean_highlight_lines(self):
         """Validar el formato de líneas a resaltar"""
@@ -159,6 +154,13 @@ class CodeBlockForm(forms.ModelForm):
             raise ValidationError(_('Para permitir envíos de estudiantes, el código debe ser editable.'))
         
         return cleaned_data
+
+    def clean_code(self):
+        """Validar que el código no esté vacío"""
+        code = self.cleaned_data.get('code')
+        if not code or not code.strip():
+            raise ValidationError(_('El código no puede estar vacío.'))
+        return code
 
 
 class ExplanationBlockForm(forms.ModelForm):
@@ -243,7 +245,6 @@ class StudentResponseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
 
-# NUEVO FORMULARIO para envíos de código de estudiantes
 class StudentCodeSubmissionForm(forms.ModelForm):
     """Formulario para que los estudiantes envíen código"""
 

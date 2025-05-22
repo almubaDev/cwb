@@ -1,10 +1,10 @@
-{% extends "courses/courses_base.html" %}
+{% extends "base_code_editor.html" %}
 
 {% block title %}
     {% if is_update %}Editar Bloque de Código{% else %}Añadir Bloque de Código{% endif %} | Bootcamp Inteligente
 {% endblock %}
 
-{% block courses_content %}
+{% block content %}
 <div class="mb-6">
     <div class="flex items-center mb-4">
         <a href="{% url 'code_reading:step_detail' step.id %}" class="text-indigo-600 hover:text-indigo-800 mr-2">
@@ -24,7 +24,7 @@
 </div>
 
 <div class="bg-white rounded-lg shadow-md p-6">
-    <form method="post" class="space-y-6">
+    <form method="post" class="space-y-6" id="codeblock-form">
         {% csrf_token %}
         
         <!-- Información básica -->
@@ -58,12 +58,40 @@
                 </div>
             </div>
             
-            <!-- Código -->
+            <!-- Código - Reemplazado con Monaco Editor -->
             <div class="mt-4">
-                <label for="{{ form.code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
                     {{ form.code.label }}
                 </label>
-                {{ form.code }}
+                
+                <!-- Campo hidden para Django -->
+                {{ form.code.as_hidden }}
+                
+                <!-- Editor Monaco -->
+                <div class="code-editor-container" data-block-id="form-editor">
+                    <!-- Header del editor -->
+                    <div class="bg-gray-800 text-white px-4 py-2 rounded-t-lg flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm font-medium" id="editor-language">TEXTO</span>
+                            <span class="bg-blue-600 text-xs px-2 py-1 rounded">Editor</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" id="copy-code-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
+                                <i class="fas fa-copy mr-1"></i>Copiar
+                            </button>
+                            <button type="button" id="fullscreen-form" class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded transition-colors">
+                                <i class="fas fa-expand mr-1"></i>Pantalla completa
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Editor de código -->
+                    <div id="code-editor-form-editor" 
+                         class="border border-gray-300 rounded-b-lg overflow-hidden"
+                         style="height: 400px;">
+                    </div>
+                </div>
+                
                 {% if form.code.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ form.code.errors.0 }}</p>
                 {% endif %}
@@ -188,27 +216,194 @@
     </form>
 </div>
 
-<!-- JavaScript para mostrar/ocultar opciones dependientes -->
+<!-- JavaScript para manejo del formulario con Monaco Editor -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const isEditableCheckbox = document.getElementById('{{ form.is_editable.id_for_label }}');
-    const submissionsOption = document.getElementById('submissions-option');
+    let formEditor = null;
     
-    function toggleSubmissionsOption() {
-        if (isEditableCheckbox.checked) {
-            submissionsOption.style.display = 'flex';
-        } else {
-            submissionsOption.style.display = 'none';
-            // Desmarcar la opción de submissions si no es editable
-            document.getElementById('{{ form.allow_student_submissions.id_for_label }}').checked = false;
+    // Esperar a que Monaco esté listo
+    if (typeof monaco !== 'undefined') {
+        initializeFormEditor();
+    } else {
+        window.addEventListener('monacoReady', function() {
+            initializeFormEditor();
+        });
+    }
+    
+    function initializeFormEditor() {
+        const codeField = document.getElementById('{{ form.code.id_for_label }}');
+        const languageField = document.getElementById('{{ form.language.id_for_label }}');
+        const themeField = document.getElementById('{{ form.theme.id_for_label }}');
+        const showLineNumbersField = document.getElementById('{{ form.show_line_numbers.id_for_label }}');
+        const wrapLinesField = document.getElementById('{{ form.wrap_lines.id_for_label }}');
+        const heightField = document.getElementById('{{ form.height.id_for_label }}');
+        
+        // Configuración inicial del editor
+        const initialConfig = {
+            value: codeField.value || '',
+            language: getMonacoLanguage(languageField.value || 'text'),
+            theme: themeField.value || 'vs-dark',
+            lineNumbers: showLineNumbersField.checked ? 'on' : 'off',
+            wordWrap: wrapLinesField.checked ? 'on' : 'off',
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            fontSize: 14,
+            lineHeight: 20,
+            padding: { top: 10, bottom: 10 }
+        };
+        
+        // Crear editor
+        formEditor = monaco.editor.create(
+            document.getElementById('code-editor-form-editor'),
+            initialConfig
+        );
+        
+        // Sincronizar con el campo del formulario
+        formEditor.onDidChangeModelContent(function() {
+            codeField.value = formEditor.getValue();
+        });
+        
+        // Actualizar lenguaje cuando cambie el select
+        languageField.addEventListener('change', function() {
+            const newLanguage = getMonacoLanguage(this.value);
+            monaco.editor.setModelLanguage(formEditor.getModel(), newLanguage);
+            updateLanguageDisplay(this.value);
+        });
+        
+        // Actualizar tema cuando cambie
+        themeField.addEventListener('change', function() {
+            monaco.editor.setTheme(this.value);
+        });
+        
+        // Actualizar números de línea
+        showLineNumbersField.addEventListener('change', function() {
+            formEditor.updateOptions({
+                lineNumbers: this.checked ? 'on' : 'off'
+            });
+        });
+        
+        // Actualizar ajuste de líneas
+        wrapLinesField.addEventListener('change', function() {
+            formEditor.updateOptions({
+                wordWrap: this.checked ? 'on' : 'off'
+            });
+        });
+        
+        // Actualizar altura
+        heightField.addEventListener('change', function() {
+            const editorContainer = document.getElementById('code-editor-form-editor');
+            editorContainer.style.height = this.value + 'px';
+            formEditor.layout();
+        });
+        
+        // Configurar botones
+        setupEditorButtons();
+        
+        // Configurar opciones dependientes
+        setupDependentOptions();
+        
+        // Actualizar display inicial del lenguaje
+        updateLanguageDisplay(languageField.value);
+        
+        // Sincronizar el contenido inicial del editor con el formulario antes de enviar
+        const form = document.getElementById('codeblock-form');
+        form.addEventListener('submit', function() {
+            codeField.value = formEditor.getValue();
+        });
+    }
+    
+    function getMonacoLanguage(formLanguage) {
+        const languageMap = {
+            'python': 'python',
+            'javascript': 'javascript',
+            'html': 'html',
+            'css': 'css',
+            'sql': 'sql',
+            'bash': 'shell',
+            'json': 'json',
+            'xml': 'xml',
+            'yaml': 'yaml',
+            'markdown': 'markdown',
+            'django-template': 'django',
+            'text': 'plaintext'
+        };
+        return languageMap[formLanguage] || 'plaintext';
+    }
+    
+    function updateLanguageDisplay(language) {
+        const displayElement = document.getElementById('editor-language');
+        if (displayElement) {
+            displayElement.textContent = language.toUpperCase();
         }
     }
     
-    // Ejecutar al cargar la página
-    toggleSubmissionsOption();
+    function setupEditorButtons() {
+        // Botón copiar
+        const copyBtn = document.getElementById('copy-code-form');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                if (formEditor) {
+                    const code = formEditor.getValue();
+                    navigator.clipboard.writeText(code).then(() => {
+                        window.CodeEditorUtils.showToast('Código copiado al portapapeles', 'success');
+                    }).catch(() => {
+                        window.CodeEditorUtils.showToast('Error al copiar el código', 'error');
+                    });
+                }
+            });
+        }
+        
+        // Botón pantalla completa
+        const fullscreenBtn = document.getElementById('fullscreen-form');
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', function() {
+                toggleFullscreen();
+            });
+        }
+    }
     
-    // Ejecutar cuando cambie el checkbox
-    isEditableCheckbox.addEventListener('change', toggleSubmissionsOption);
+    function toggleFullscreen() {
+        const container = document.querySelector('[data-block-id="form-editor"]');
+        const icon = document.querySelector('#fullscreen-form i');
+        
+        container.classList.toggle('fullscreen');
+        
+        if (container.classList.contains('fullscreen')) {
+            icon.className = 'fas fa-compress mr-1';
+            document.body.style.overflow = 'hidden';
+        } else {
+            icon.className = 'fas fa-expand mr-1';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Redimensionar el editor
+        setTimeout(() => {
+            if (formEditor) {
+                formEditor.layout();
+            }
+        }, 100);
+    }
+    
+    function setupDependentOptions() {
+        const isEditableCheckbox = document.getElementById('{{ form.is_editable.id_for_label }}');
+        const submissionsOption = document.getElementById('submissions-option');
+        
+        function toggleSubmissionsOption() {
+            if (isEditableCheckbox.checked) {
+                submissionsOption.style.display = 'flex';
+            } else {
+                submissionsOption.style.display = 'none';
+                document.getElementById('{{ form.allow_student_submissions.id_for_label }}').checked = false;
+            }
+        }
+        
+        // Ejecutar al cargar la página
+        toggleSubmissionsOption();
+        
+        // Ejecutar cuando cambie el checkbox
+        isEditableCheckbox.addEventListener('change', toggleSubmissionsOption);
+    }
 });
 </script>
 {% endblock %}
