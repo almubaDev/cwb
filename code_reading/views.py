@@ -10,11 +10,13 @@ from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 import json
 
 from .models import (
     CodeReading, CodeReadingStep, CodeBlock, 
-    ExplanationBlock, QuestionBlock, StudentResponse, StudentProgress
+    ExplanationBlock, QuestionBlock, StudentResponse, StudentProgress, StudentCodeSubmission
 )
 from .forms import (
     CodeReadingForm, CodeReadingStepForm, CodeBlockForm, 
@@ -973,3 +975,160 @@ def question_block_detail_api(request, block_id):
                'success': False,
                'error': str(e)
            }, status=400)
+
+
+# *** NUEVAS VISTAS API PARA EL EDITOR DE CÓDIGO ***
+
+@login_required
+@require_http_methods(["POST"])
+def save_student_code_api(request):
+    """API para guardar el código enviado por estudiantes"""
+    try:
+        data = json.loads(request.body)
+        code_block_id = data.get('code_block_id')
+        submitted_code = data.get('code')
+        is_final_submission = data.get('is_final_submission', False)
+        
+        if not code_block_id or submitted_code is None:
+            return JsonResponse({
+                'success': False,
+                'error': 'Faltan datos requeridos'
+            }, status=400)
+        
+        # Verificar que el bloque de código existe y es editable
+        try:
+            code_block = CodeBlock.objects.get(id=code_block_id)
+        except CodeBlock.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Bloque de código no encontrado'
+            }, status=404)
+        
+        if not code_block.is_editable:
+            return JsonResponse({
+                'success': False,
+                'error': 'Este bloque de código no es editable'
+            }, status=403)
+        
+        if is_final_submission and not code_block.allow_student_submissions:
+            return JsonResponse({
+                'success': False,
+                'error': 'Este bloque no permite envíos de estudiantes'
+            }, status=403)
+        
+        # Crear o actualizar la submission
+        submission, created = StudentCodeSubmission.objects.update_or_create(
+            user=request.user,
+            code_block=code_block,
+            defaults={
+                'submitted_code': submitted_code,
+                'is_final_submission': is_final_submission
+            }
+        )
+        
+        # Si es envío final, generar feedback con IA (placeholder por ahora)
+        feedback = None
+        if is_final_submission:
+            # TODO: Integrar con servicio de IA para generar feedback
+            feedback = "Código recibido correctamente. El feedback de IA estará disponible pronto."
+            submission.ai_feedback = feedback
+            submission.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Enviado correctamente' if is_final_submission else 'Guardado correctamente',
+            'feedback': feedback,
+            'submission_id': submission.id,
+            'is_final': submission.is_final_submission
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Datos JSON inválidos'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error del servidor: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_student_code_api(request, code_block_id):
+    """API para obtener el código guardado por un estudiante"""
+    try:
+        code_block = get_object_or_404(CodeBlock, id=code_block_id)
+        
+        # Obtener la última submission del estudiante para este bloque
+        try:
+            submission = StudentCodeSubmission.objects.get(
+                user=request.user,
+                code_block=code_block
+            )
+            return JsonResponse({
+                'success': True,
+                'code': submission.submitted_code,
+                'is_final_submission': submission.is_final_submission,
+                'ai_feedback': submission.ai_feedback,
+                'last_updated': submission.updated.isoformat()
+            })
+        except StudentCodeSubmission.DoesNotExist:
+            # Si no hay submission, retornar el código original del bloque
+            return JsonResponse({
+                'success': True,
+                'code': code_block.code,
+                'is_final_submission': False,
+                'ai_feedback': '',
+                'last_updated': None
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error del servidor: {str(e)}'
+        }, status=500)
+
+
+@login_required 
+@require_http_methods(["GET"])
+def code_block_submissions_api(request, code_block_id):
+    """API para obtener todas las submissions de un bloque de código (para instructores)"""
+    try:
+        # Solo instructores pueden ver todas las submissions
+        if request.user.role != 'instructor':
+            return JsonResponse({
+                'success': False,
+                'error': 'No tienes permisos para ver esta información'
+            }, status=403)
+        
+        code_block = get_object_or_404(CodeBlock, id=code_block_id)
+        submissions = StudentCodeSubmission.objects.filter(
+            code_block=code_block
+        ).select_related('user').order_by('-created')
+        
+        submissions_data = []
+        for submission in submissions:
+            submissions_data.append({
+                'id': submission.id,
+                'user_email': submission.user.email,
+                'user_name': f"{submission.user.profile.first_name} {submission.user.profile.last_name}".strip() or submission.user.email,
+                'submitted_code': submission.submitted_code,
+                'is_final_submission': submission.is_final_submission,
+                'ai_feedback': submission.ai_feedback,
+                'created': submission.created.isoformat(),
+                'updated': submission.updated.isoformat()
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'submissions': submissions_data,
+            'total_count': len(submissions_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error del servidor: {str(e)}'
+        }, status=500)

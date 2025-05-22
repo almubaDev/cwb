@@ -59,4 +59,9 @@ urlpatterns = [
     # API para QuestionBlocks
     path('api/question_blocks/', views.question_block_api, name='api_question_blocks'),
     path('api/question_blocks/<int:block_id>/', views.question_block_detail_api, name='api_question_block_detail'),
+    
+    # *** NUEVAS APIs PARA EL EDITOR DE CÓDIGO ***
+    path('api/save-student-code/', views.save_student_code_api, name='api_save_student_code'),
+    path('api/get-student-code/<int:code_block_id>/', views.get_student_code_api, name='api_get_student_code'),
+    path('api/code-blocks/<int:code_block_id>/submissions/', views.code_block_submissions_api, name='api_code_block_submissions'),
 ]

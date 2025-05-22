@@ -48,6 +48,9 @@
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-lg font-semibold text-gray-800">Paso {{ step.order }}: {{ step.title }}</h3>
                         <div class="flex space-x-2">
+                            <a href="{% url 'code_reading:step_detail' step.id %}" class="text-indigo-600 hover:text-indigo-800" title="Ver Paso Completo">
+                                <i class="fas fa-eye"></i>
+                            </a>
                             <a href="{% url 'code_reading:step_update' step.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Paso">
                                 <i class="fas fa-edit"></i>
                             </a>
@@ -63,7 +66,10 @@
                         <!-- Columna Izquierda: Bloques de Código -->
                         <div class="bg-gray-100 p-4 rounded-lg border border-gray-300">
                             <div class="flex justify-between items-center mb-3">
-                                <h4 class="text-md font-semibold text-gray-700">Bloques de Código</h4>
+                                <h4 class="text-md font-semibold text-gray-700 flex items-center">
+                                    <i class="fas fa-code mr-1"></i>
+                                    Bloques de Código
+                                </h4>
                                 <a href="{% url 'code_reading:codeblock_create' step.id %}" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
                                     <i class="fas fa-plus mr-1"></i> Añadir Código
                                 </a>
@@ -71,8 +77,11 @@
                             <div class="space-y-3">
                                 {% for code_block in step.code_blocks.all %}
                                     <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                        <div class="flex justify-between items-center">
-                                            <p class="text-sm font-medium text-gray-800">Código {{ code_block.order }} ({{ code_block.language }})</p>
+                                        <div class="flex justify-between items-center mb-2">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="text-sm font-medium text-gray-800">Código {{ code_block.order }}</p>
+                                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{{ code_block.language }}</span>
+                                            </div>
                                             <div class="flex space-x-2">
                                                 <a href="{% url 'code_reading:codeblock_update' code_block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Código">
                                                     <i class="fas fa-edit"></i>
@@ -82,7 +91,40 @@
                                                 </a>
                                             </div>
                                         </div>
-                                        <pre class="bg-gray-800 text-white p-2 rounded text-xs overflow-x-auto mt-2">{{ code_block.code|truncatechars:100 }}</pre>
+                                        
+                                        <!-- Indicadores del tipo de bloque -->
+                                        <div class="flex flex-wrap gap-1 mb-2">
+                                            {% if code_block.is_editable %}
+                                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded flex items-center">
+                                                    <i class="fas fa-edit mr-1"></i>Editable
+                                                </span>
+                                            {% else %}
+                                                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded flex items-center">
+                                                    <i class="fas fa-lock mr-1"></i>Solo lectura
+                                                </span>
+                                            {% endif %}
+                                            
+                                            {% if code_block.allow_student_submissions %}
+                                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded flex items-center">
+                                                    <i class="fas fa-paper-plane mr-1"></i>Envíos
+                                                </span>
+                                            {% endif %}
+                                            
+                                            {% if code_block.highlight_lines %}
+                                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded flex items-center">
+                                                    <i class="fas fa-highlight mr-1"></i>Resaltado
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <pre class="bg-gray-800 text-white p-2 rounded text-xs overflow-x-auto mt-2"><code>{{ code_block.code|truncatechars:100 }}</code></pre>
+                                        
+                                        <div class="mt-2 text-xs text-gray-500 flex justify-between">
+                                            <span>{{ code_block.theme }} | {{ code_block.height }}px</span>
+                                            {% if code_block.highlight_lines %}
+                                                <span>Líneas: {{ code_block.highlight_lines }}</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 {% empty %}
                                     <p class="text-sm text-gray-500">No hay bloques de código en este paso.</p>
@@ -93,7 +135,10 @@
                         <!-- Columna Derecha: Explicaciones y Preguntas -->
                         <div class="bg-gray-100 p-4 rounded-lg border border-gray-300">
                             <div class="flex justify-between items-center mb-3">
-                                <h4 class="text-md font-semibold text-gray-700">Explicaciones y Preguntas</h4>
+                                <h4 class="text-md font-semibold text-gray-700 flex items-center">
+                                    <i class="fas fa-comments mr-1"></i>
+                                    Explicaciones y Preguntas
+                                </h4>
                                 <div class="flex space-x-2">
                                     <a href="{% url 'code_reading:explanation_create' step.id %}" class="text-green-600 hover:text-green-800 text-sm flex items-center">
                                         <i class="fas fa-plus mr-1"></i> Explicación
@@ -106,9 +151,12 @@
                             <div class="space-y-3">
                                 {% for block in step.explanation_blocks.all|add:step.question_blocks.all|dictsort:"order" %}
                                     <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex justify-between items-center mb-2">
                                             {% if block.question_text %}
-                                                <p class="text-sm font-medium text-gray-800">Pregunta {{ block.order }}</p>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-question-circle text-purple-600 mr-1"></i>
+                                                    <p class="text-sm font-medium text-gray-800">Pregunta {{ block.order }}</p>
+                                                </div>
                                                 <div class="flex space-x-2">
                                                     <a href="{% url 'code_reading:question_update' block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Pregunta">
                                                         <i class="fas fa-edit"></i>
@@ -118,7 +166,10 @@
                                                     </a>
                                                 </div>
                                             {% else %}
-                                                <p class="text-sm font-medium text-gray-800">Explicación {{ block.order }}</p>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-lightbulb text-green-600 mr-1"></i>
+                                                    <p class="text-sm font-medium text-gray-800">Explicación {{ block.order }}</p>
+                                                </div>
                                                 <div class="flex space-x-2">
                                                     <a href="{% url 'code_reading:explanation_update' block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Explicación">
                                                         <i class="fas fa-edit"></i>
@@ -137,12 +188,33 @@
                                             {% endif %}
                                         </p>
                                         {% if block.related_code_block %}
-                                            <p class="text-xs text-gray-500 mt-1">Relacionado con Código {{ block.related_code_block.order }}</p>
+                                            <p class="text-xs text-blue-600 mt-1 flex items-center">
+                                                <i class="fas fa-link mr-1"></i>
+                                                Relacionado con Código {{ block.related_code_block.order }}
+                                            </p>
                                         {% endif %}
                                     </div>
                                 {% empty %}
                                     <p class="text-sm text-gray-500">No hay explicaciones o preguntas en este paso.</p>
                                 {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Estadísticas del paso -->
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="grid grid-cols-3 gap-4 text-center text-xs">
+                            <div class="bg-blue-50 p-2 rounded">
+                                <div class="font-bold text-blue-600">{{ step.code_blocks.count }}</div>
+                                <div class="text-blue-800">Códigos</div>
+                            </div>
+                            <div class="bg-green-50 p-2 rounded">
+                                <div class="font-bold text-green-600">{{ step.explanation_blocks.count }}</div>
+                                <div class="text-green-800">Explicaciones</div>
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded">
+                                <div class="font-bold text-purple-600">{{ step.question_blocks.count }}</div>
+                                <div class="text-purple-800">Preguntas</div>
                             </div>
                         </div>
                     </div>
@@ -191,10 +263,36 @@
     </div>
 </div>
 
-{% comment %}
-    JavaScript para la gestión dinámica de pasos y bloques.
-    Esto se puede mover a un archivo JS separado si crece mucho.
-{% endcomment %}
+<!-- Resumen general de la lectura -->
+<div class="bg-white p-4 rounded-lg border border-gray-200">
+    <h3 class="text-lg font-medium text-gray-800 mb-3">Resumen de la lectura</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="bg-indigo-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-indigo-600">{{ steps.count }}</div>
+            <div class="text-sm text-indigo-800">Pasos totales</div>
+        </div>
+        <div class="bg-blue-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-blue-600">
+                {% widthratio steps.code_blocks.count 1 1 %}
+            </div>
+            <div class="text-sm text-blue-800">Bloques de código</div>
+        </div>
+        <div class="bg-green-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-green-600">
+                {% widthratio steps.explanation_blocks.count 1 1 %}
+            </div>
+            <div class="text-sm text-green-800">Explicaciones</div>
+        </div>
+        <div class="bg-purple-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-purple-600">
+                {% widthratio steps.question_blocks.count 1 1 %}
+            </div>
+            <div class="text-sm text-purple-800">Preguntas</div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para la gestión dinámica de pasos -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const addStepBtn = document.getElementById('add-step-btn');
@@ -211,7 +309,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ocultar modal
     cancelAddStepBtn.addEventListener('click', function() {
         addStepModal.classList.add('hidden');
-        addStepForm.reset(); // Limpiar formulario
+        addStepForm.reset();
+    });
+
+    // Cerrar modal al hacer clic fuera
+    addStepModal.addEventListener('click', function(e) {
+        if (e.target === addStepModal) {
+            addStepModal.classList.add('hidden');
+            addStepForm.reset();
+        }
     });
 
     // Enviar formulario de nuevo paso
@@ -222,6 +328,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = Object.fromEntries(formData.entries());
         data.code_reading = parseInt(data.code_reading);
         data.order = parseInt(data.order);
+
+        // Deshabilitar botón mientras se envía
+        const submitBtn = addStepForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Creando...';
 
         fetch('{% url "code_reading:api_steps" %}', {
             method: 'POST',
@@ -234,20 +346,54 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(result => {
             if (result.success) {
-                alert('Paso creado con éxito!');
+                // Mostrar mensaje de éxito
+                showSuccessMessage('Paso creado con éxito!');
                 addStepModal.classList.add('hidden');
                 addStepForm.reset();
-                // Recargar la página para ver el nuevo paso (se puede mejorar con AJAX para añadir dinámicamente)
-                location.reload(); 
+                // Recargar la página para ver el nuevo paso
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
             } else {
-                alert('Error al crear el paso: ' + JSON.stringify(result.errors || result.error));
+                throw new Error(result.error || 'Error desconocido');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error de red o del servidor.');
+            showErrorMessage('Error al crear el paso: ' + error.message);
+        })
+        .finally(() => {
+            // Rehabilitar botón
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         });
     });
+
+    function showSuccessMessage(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        document.body.appendChild(alertDiv);
+        setTimeout(() => alertDiv.remove(), 3000);
+    }
+
+    function showErrorMessage(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        document.body.appendChild(alertDiv);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
 });
 </script>
 {% endblock %}

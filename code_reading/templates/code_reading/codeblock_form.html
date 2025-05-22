@@ -24,25 +24,160 @@
 </div>
 
 <div class="bg-white rounded-lg shadow-md p-6">
-    <form method="post" class="space-y-4">
+    <form method="post" class="space-y-6">
         {% csrf_token %}
         
-        {% for field in form %}
-            <div class="mb-4">
-                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
-                <div class="mt-1">
-                    {{ field }}
+        <!-- Información básica -->
+        <div class="border-b border-gray-200 pb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Información básica</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Step (oculto) -->
+                <input type="hidden" name="step" value="{{ step.id }}">
+                
+                <!-- Lenguaje -->
+                <div>
+                    <label for="{{ form.language.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.language.label }}
+                    </label>
+                    {{ form.language }}
+                    {% if form.language.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.language.errors.0 }}</p>
+                    {% endif %}
                 </div>
-                {% if field.help_text %}
-                    <p class="mt-2 text-sm text-gray-500">{{ field.help_text }}</p>
-                {% endif %}
-                {% for error in field.errors %}
-                    <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                {% endfor %}
+                
+                <!-- Orden -->
+                <div>
+                    <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.order.label }}
+                    </label>
+                    {{ form.order }}
+                    {% if form.order.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.order.errors.0 }}</p>
+                    {% endif %}
+                </div>
             </div>
-        {% endfor %}
+            
+            <!-- Código -->
+            <div class="mt-4">
+                <label for="{{ form.code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ form.code.label }}
+                </label>
+                {{ form.code }}
+                {% if form.code.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.code.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Líneas a resaltar -->
+            <div class="mt-4">
+                <label for="{{ form.highlight_lines.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ form.highlight_lines.label }}
+                </label>
+                {{ form.highlight_lines }}
+                {% if form.highlight_lines.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.highlight_lines.help_text }}</p>
+                {% endif %}
+                {% if form.highlight_lines.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.highlight_lines.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
         
-        <div class="flex justify-end space-x-3">
+        <!-- Configuración del editor -->
+        <div class="border-b border-gray-200 pb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Configuración del editor</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Tema -->
+                <div>
+                    <label for="{{ form.theme.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.theme.label }}
+                    </label>
+                    {{ form.theme }}
+                    {% if form.theme.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.theme.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Altura -->
+                <div>
+                    <label for="{{ form.height.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.height.label }}
+                    </label>
+                    {{ form.height }}
+                    {% if form.height.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.height.help_text }}</p>
+                    {% endif %}
+                    {% if form.height.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.height.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Checkboxes de configuración -->
+            <div class="mt-4 space-y-3">
+                <div class="flex items-center">
+                    {{ form.show_line_numbers }}
+                    <label for="{{ form.show_line_numbers.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                        {{ form.show_line_numbers.label }}
+                    </label>
+                    {% if form.show_line_numbers.errors %}
+                        <p class="ml-2 text-sm text-red-600">{{ form.show_line_numbers.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center">
+                    {{ form.wrap_lines }}
+                    <label for="{{ form.wrap_lines.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                        {{ form.wrap_lines.label }}
+                    </label>
+                    {% if form.wrap_lines.errors %}
+                        <p class="ml-2 text-sm text-red-600">{{ form.wrap_lines.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Opciones para estudiantes -->
+        <div class="pb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Opciones para estudiantes</h3>
+            
+            <div class="space-y-3">
+                <div class="flex items-start">
+                    {{ form.is_editable }}
+                    <div class="ml-2">
+                        <label for="{{ form.is_editable.id_for_label }}" class="text-sm font-medium text-gray-700">
+                            {{ form.is_editable.label }}
+                        </label>
+                        {% if form.is_editable.help_text %}
+                            <p class="text-sm text-gray-500">{{ form.is_editable.help_text }}</p>
+                        {% endif %}
+                        {% if form.is_editable.errors %}
+                            <p class="text-sm text-red-600">{{ form.is_editable.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="flex items-start" id="submissions-option" style="display: none;">
+                    {{ form.allow_student_submissions }}
+                    <div class="ml-2">
+                        <label for="{{ form.allow_student_submissions.id_for_label }}" class="text-sm font-medium text-gray-700">
+                            {{ form.allow_student_submissions.label }}
+                        </label>
+                        {% if form.allow_student_submissions.help_text %}
+                            <p class="text-sm text-gray-500">{{ form.allow_student_submissions.help_text }}</p>
+                        {% endif %}
+                        {% if form.allow_student_submissions.errors %}
+                            <p class="text-sm text-red-600">{{ form.allow_student_submissions.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <a href="{% url 'code_reading:step_detail' step.id %}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Cancelar
             </a>
@@ -52,4 +187,28 @@
         </div>
     </form>
 </div>
+
+<!-- JavaScript para mostrar/ocultar opciones dependientes -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isEditableCheckbox = document.getElementById('{{ form.is_editable.id_for_label }}');
+    const submissionsOption = document.getElementById('submissions-option');
+    
+    function toggleSubmissionsOption() {
+        if (isEditableCheckbox.checked) {
+            submissionsOption.style.display = 'flex';
+        } else {
+            submissionsOption.style.display = 'none';
+            // Desmarcar la opción de submissions si no es editable
+            document.getElementById('{{ form.allow_student_submissions.id_for_label }}').checked = false;
+        }
+    }
+    
+    // Ejecutar al cargar la página
+    toggleSubmissionsOption();
+    
+    // Ejecutar cuando cambie el checkbox
+    isEditableCheckbox.addEventListener('change', toggleSubmissionsOption);
+});
+</script>
 {% endblock %}

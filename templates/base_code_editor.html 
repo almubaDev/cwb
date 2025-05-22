@@ -1,0 +1,255 @@
+<!-- templates/base_code_editor.html -->
+<!-- Template base específico para páginas que usan el editor de código -->
+{% extends "base.html" %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Estilos globales para el editor de código */
+    .monaco-editor {
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+    
+    .code-editor-container {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    /* Estilos para el modo pantalla completa */
+    .fullscreen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 999;
+    }
+    
+    .code-editor-container.fullscreen {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 20px;
+        border-radius: 0.5rem;
+    }
+    
+    /* Estilos para los highlights */
+    .highlight-line {
+        background: rgba(255, 255, 0, 0.2) !important;
+    }
+    
+    /* Estilos de los botones con estados */
+    .btn-loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    
+    .btn-success {
+        background-color: #10b981 !important;
+    }
+    
+    .btn-error {
+        background-color: #ef4444 !important;
+    }
+    
+    /* Estilos para toast notifications */
+    .toast {
+        transition: all 0.3s ease-in-out;
+        transform: translateX(100%);
+    }
+    
+    .toast.show {
+        transform: translateX(0);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<!-- Monaco Editor CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+<script>
+    // Variable global para almacenar las instancias de editores
+    window.codeEditors = {};
+    
+    // Configurar Monaco Editor
+    require.config({ 
+        paths: { 
+            'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' 
+        } 
+    });
+    
+    require(['vs/editor/editor.main'], function() {
+        console.log('Monaco Editor cargado correctamente');
+        
+        // Configurar temas personalizados
+        monaco.editor.defineTheme('customDark', {
+            base: 'vs-dark',
+            inherit: true,
+            rules: [
+                { token: 'comment', foreground: '6A9955' },
+                { token: 'keyword', foreground: '569CD6' },
+                { token: 'string', foreground: 'CE9178' },
+                { token: 'number', foreground: 'B5CEA8' }
+            ],
+            colors: {
+                'editor.background': '#1e1e1e',
+                'editor.lineHighlightBackground': '#2d3748',
+                'editorLineNumber.foreground': '#858585'
+            }
+        });
+        
+        // Registrar lenguajes personalizados
+        monaco.languages.register({ id: 'django-template' });
+        monaco.languages.setMonarchTokensProvider('django-template', {
+            tokenizer: {
+                root: [
+                    [/\{\{.*?\}\}/, 'variable'],
+                    [/\{%.*?%\}/, 'keyword'],
+                    [/\{#.*?#\}/, 'comment'],
+                    [/<[^>]+>/, 'tag'],
+                ]
+            }
+        });
+        
+        // Disparar evento personalizado cuando Monaco esté listo
+        window.dispatchEvent(new CustomEvent('monacoReady'));
+    });
+    
+    // Funciones utilitarias globales
+    window.CodeEditorUtils = {
+        // Función para crear editor
+        createEditor: function(blockId, config) {
+            const editorContainer = document.getElementById(`code-editor-${blockId}`);
+            if (!editorContainer) {
+                console.error(`No se encontró el contenedor para el editor ${blockId}`);
+                return null;
+            }
+            
+            const editor = monaco.editor.create(editorContainer, {
+                value: config.code || '',
+                language: config.language || 'plaintext',
+                theme: config.theme || 'vs-dark',
+                readOnly: !config.isEditable,
+                lineNumbers: config.showLineNumbers ? 'on' : 'off',
+                wordWrap: config.wrapLines ? 'on' : 'off',
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                fontSize: 14,
+                lineHeight: 20,
+                padding: { top: 10, bottom: 10 }
+            });
+            
+            // Guardar referencia del editor
+            window.codeEditors[blockId] = editor;
+            
+            return editor;
+        },
+        
+        // Función para aplicar highlights
+        applyHighlights: function(editor, highlightLines) {
+            if (!highlightLines) return;
+            
+            const lines = this.parseHighlightLines(highlightLines);
+            const decorations = lines.map(lineNumber => ({
+                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                options: {
+                    isWholeLine: true,
+                    className: 'highlight-line'
+                }
+            }));
+            
+            editor.deltaDecorations([], decorations);
+        },
+        
+        // Función para parsear líneas a resaltar
+        parseHighlightLines: function(highlightString) {
+            const lines = [];
+            const parts = highlightString.split(',');
+            
+            parts.forEach(part => {
+                part = part.trim();
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(num => parseInt(num.trim()));
+                    for (let i = start; i <= end; i++) {
+                        lines.push(i);
+                    }
+                } else {
+                    lines.push(parseInt(part));
+                }
+            });
+            
+            return lines;
+        },
+        
+        // Función para mostrar toast notifications
+        showToast: function(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${this.getToastClasses(type)}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${this.getToastIcon(type)} mr-2"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-lg">&times;</button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Animar entrada
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Auto-remove después de 3 segundos
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 3000);
+        },
+        
+        getToastClasses: function(type) {
+            const classes = {
+                'success': 'bg-green-500 text-white',
+                'error': 'bg-red-500 text-white',
+                'warning': 'bg-yellow-500 text-black',
+                'info': 'bg-blue-500 text-white'
+            };
+            return classes[type] || classes.info;
+        },
+        
+        getToastIcon: function(type) {
+            const icons = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            };
+            return icons[type] || icons.info;
+        },
+        
+        // Función para obtener cookie CSRF
+        getCookie: function(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    };
+</script>
+{% endblock %}

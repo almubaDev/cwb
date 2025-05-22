@@ -7,6 +7,15 @@ from .models import (
     ExplanationBlock, QuestionBlock, StudentResponse
 )
 
+# code_reading/forms.py
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+from .models import (
+    CodeReading, CodeReadingStep, CodeBlock, 
+    ExplanationBlock, QuestionBlock, StudentResponse, StudentCodeSubmission
+)
+
 class CodeReadingForm(forms.ModelForm):
     """Formulario para crear y editar Lecturas de Código"""
 
@@ -71,37 +80,42 @@ class CodeBlockForm(forms.ModelForm):
 
     class Meta:
         model = CodeBlock
-        fields = ['step', 'code', 'language', 'order', 'highlight_lines']
+        fields = [
+            'step', 'code', 'language', 'order', 'highlight_lines',
+            'is_editable', 'show_line_numbers', 'theme', 'height', 
+            'wrap_lines', 'allow_student_submissions'
+        ]
         widgets = {
             'step': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
-            'code': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500', 'rows': 10}),
+            'code': forms.Textarea(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono', 
+                'rows': 15,
+                'placeholder': 'Escribe tu código aquí...',
+                'style': 'font-family: "Courier New", Courier, monospace;'
+            }),
             'language': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
             'order': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
-            'highlight_lines': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500', 'placeholder': 'Ej: 1,3,5-7'}),
+            'highlight_lines': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500', 
+                'placeholder': 'Ej: 1,3,5-7'
+            }),
+            'theme': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'}),
+            'height': forms.NumberInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500',
+                'min': '200',
+                'max': '800',
+                'step': '50',
+                'value': '300'
+            }),
+            'is_editable': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
+            'show_line_numbers': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
+            'wrap_lines': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
+            'allow_student_submissions': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'}),
         }
 
     def __init__(self, *args, **kwargs):
         step = kwargs.pop('step', None)
         super().__init__(*args, **kwargs)
-        
-        # Personalizar las opciones de lenguajes
-        self.fields['language'].choices = [
-            ('python', 'Python'),
-            ('javascript', 'JavaScript'),
-            ('java', 'Java'),
-            ('csharp', 'C#'),
-            ('cpp', 'C++'),
-            ('php', 'PHP'),
-            ('ruby', 'Ruby'),
-            ('go', 'Go'),
-            ('swift', 'Swift'),
-            ('typescript', 'TypeScript'),
-            ('html', 'HTML'),
-            ('css', 'CSS'),
-            ('sql', 'SQL'),
-            ('bash', 'Bash/Shell'),
-            ('other', 'Otro'),
-        ]
         
         # Si se proporciona un paso, preestablecerlo y calcular el siguiente orden
         if step:
@@ -119,6 +133,7 @@ class CodeBlockForm(forms.ModelForm):
         # Validar formato (1,3,5-7)
         parts = highlight_lines.split(',')
         for part in parts:
+            part = part.strip()
             if '-' in part:
                 try:
                     start, end = map(int, part.split('-'))
@@ -133,6 +148,17 @@ class CodeBlockForm(forms.ModelForm):
                     raise ValidationError(_('Las líneas deben ser números enteros.'))
                     
         return highlight_lines
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_editable = cleaned_data.get('is_editable')
+        allow_submissions = cleaned_data.get('allow_student_submissions')
+        
+        # Si permite envíos, debe ser editable
+        if allow_submissions and not is_editable:
+            raise ValidationError(_('Para permitir envíos de estudiantes, el código debe ser editable.'))
+        
+        return cleaned_data
 
 
 class ExplanationBlockForm(forms.ModelForm):
@@ -214,4 +240,25 @@ class StudentResponseForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.question = kwargs.pop('question', None)
+        super().__init__(*args, **kwargs)
+
+
+# NUEVO FORMULARIO para envíos de código de estudiantes
+class StudentCodeSubmissionForm(forms.ModelForm):
+    """Formulario para que los estudiantes envíen código"""
+
+    class Meta:
+        model = StudentCodeSubmission
+        fields = ['submitted_code']
+        widgets = {
+            'submitted_code': forms.Textarea(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono',
+                'rows': 10,
+                'style': 'font-family: "Courier New", Courier, monospace;'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.code_block = kwargs.pop('code_block', None)
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)

@@ -142,7 +142,21 @@ class CodeBlock(models.Model):
     language = models.CharField(
         max_length=50,
         verbose_name="Lenguaje",
-        default="python"
+        default="text",
+        choices=[
+            ('python', 'Python'),
+            ('javascript', 'JavaScript'),
+            ('html', 'HTML'),
+            ('css', 'CSS'),
+            ('sql', 'SQL'),
+            ('bash', 'Bash/Shell'),
+            ('json', 'JSON'),
+            ('xml', 'XML'),
+            ('yaml', 'YAML'),
+            ('markdown', 'Markdown'),
+            ('django-template', 'Django Template'),
+            ('text', 'Texto plano'),
+        ]
     )
     order = models.PositiveIntegerField(
         default=1,
@@ -155,6 +169,47 @@ class CodeBlock(models.Model):
         help_text="Formato: '1,3,5-7' para resaltar líneas 1, 3, y del 5 al 7"
     )
     
+    # NUEVOS CAMPOS PARA EL EDITOR
+    is_editable = models.BooleanField(
+        default=False,
+        verbose_name="¿Es editable?",
+        help_text="Si está marcado, los estudiantes podrán editar el código"
+    )
+    show_line_numbers = models.BooleanField(
+        default=True,
+        verbose_name="Mostrar números de línea"
+    )
+    theme = models.CharField(
+        max_length=20,
+        default='vs-dark',
+        verbose_name="Tema del editor",
+        choices=[
+            ('vs', 'Visual Studio Light'),
+            ('vs-dark', 'Visual Studio Dark'),
+            ('hc-black', 'High Contrast Black'),
+            ('monokai', 'Monokai'),
+            ('github', 'GitHub'),
+            ('solarized-dark', 'Solarized Dark'),
+            ('solarized-light', 'Solarized Light'),
+        ]
+    )
+    height = models.PositiveIntegerField(
+        default=300,
+        verbose_name="Altura del editor (px)",
+        help_text="Altura en píxeles del editor de código"
+    )
+    wrap_lines = models.BooleanField(
+        default=False,
+        verbose_name="Ajustar líneas largas"
+    )
+    
+    # Campo para permitir envíos de estudiantes
+    allow_student_submissions = models.BooleanField(
+        default=False,
+        verbose_name="Permitir envío de soluciones",
+        help_text="Si está marcado junto con 'es editable', los estudiantes podrán enviar su código"
+    )
+    
     class Meta:
         verbose_name = "Bloque de Código"
         verbose_name_plural = "Bloques de Código"
@@ -162,6 +217,24 @@ class CodeBlock(models.Model):
     
     def __str__(self):
         return f"Código {self.order} - {self.step}"
+    
+    def get_language_mode(self):
+        """Retorna el modo de lenguaje para Monaco Editor"""
+        language_modes = {
+            'python': 'python',
+            'javascript': 'javascript',
+            'html': 'html',
+            'css': 'css',
+            'sql': 'sql',
+            'bash': 'shell',
+            'json': 'json',
+            'xml': 'xml',
+            'yaml': 'yaml',
+            'markdown': 'markdown',
+            'django-template': 'django',
+            'text': 'plaintext',
+        }
+        return language_modes.get(self.language, 'plaintext')
 
 
 class ExplanationBlock(models.Model):
@@ -331,3 +404,52 @@ class StudentProgress(models.Model):
     
     def __str__(self):
         return f"Progreso de {self.user.username} en {self.code_reading.title}"
+
+
+# NUEVO MODELO para almacenar las respuestas de estudiantes a códigos editables
+class StudentCodeSubmission(models.Model):
+    """
+    Almacena las versiones del código que envían los estudiantes
+    cuando el bloque de código es editable.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='code_submissions',
+        verbose_name="Estudiante"
+    )
+    code_block = models.ForeignKey(
+        CodeBlock,
+        on_delete=models.CASCADE,
+        related_name='student_submissions',
+        verbose_name="Bloque de código"
+    )
+    submitted_code = models.TextField(
+        verbose_name="Código enviado por el estudiante"
+    )
+    is_final_submission = models.BooleanField(
+        default=False,
+        verbose_name="¿Es envío final?",
+        help_text="Marca la última versión enviada por el estudiante"
+    )
+    ai_feedback = models.TextField(
+        blank=True,
+        verbose_name="Feedback de la IA"
+    )
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de creación"
+    )
+    updated = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Última actualización"
+    )
+    
+    class Meta:
+        verbose_name = "Envío de Código de Estudiante"
+        verbose_name_plural = "Envíos de Código de Estudiantes"
+        ordering = ['-created']
+        unique_together = ['user', 'code_block']  # Un estudiante solo puede tener una versión final por bloque
+    
+    def __str__(self):
+        return f"Envío de {self.user.email} para {self.code_block}"

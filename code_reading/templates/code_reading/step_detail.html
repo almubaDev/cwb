@@ -1,8 +1,8 @@
-{% extends "courses/courses_base.html" %}
+{% extends "base_code_editor.html" %}
 
 {% block title %}Paso {{ step.order }}: {{ step.title }} | Lectura de Código | Bootcamp Inteligente{% endblock %}
 
-{% block courses_content %}
+{% block content %}
 <div class="mb-6 flex justify-between items-center">
     <div>
         <div class="flex items-center mb-2">
@@ -27,20 +27,39 @@
 </div>
 
 <!-- Contenedor de Bloques (Diseño de dos columnas) -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <!-- Columna Izquierda: Bloques de Código -->
-    <div class="bg-gray-100 p-4 rounded-lg border border-gray-300">
-        <div class="flex justify-between items-center mb-3">
-            <h4 class="text-md font-semibold text-gray-700">Bloques de Código ({{ code_blocks.count }})</h4>
-            <a href="{% url 'code_reading:codeblock_create' step.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-300">
+        <div class="flex justify-between items-center mb-4">
+            <h4 class="text-lg font-semibold text-gray-700 flex items-center">
+                <i class="fas fa-code mr-2"></i>
+                Bloques de Código ({{ code_blocks.count }})
+            </h4>
+            <a href="{% url 'code_reading:codeblock_create' step.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm flex items-center">
                 <i class="fas fa-plus mr-1"></i> Añadir Código
             </a>
         </div>
-        <div class="space-y-3">
+        
+        <div class="space-y-4">
             {% for code_block in code_blocks %}
-                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center">
-                        <p class="text-sm font-medium text-gray-800">Código {{ code_block.order }} ({{ code_block.language }})</p>
+                <!-- Usar el componente del editor de código -->
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <!-- Header del bloque -->
+                    <div class="bg-gray-100 px-4 py-2 border-b border-gray-200 flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-medium text-gray-800">Código {{ code_block.order }}</span>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{{ code_block.language }}</span>
+                            {% if code_block.is_editable %}
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                    <i class="fas fa-edit mr-1"></i>Editable
+                                </span>
+                            {% endif %}
+                            {% if code_block.allow_student_submissions %}
+                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                                    <i class="fas fa-paper-plane mr-1"></i>Envíos
+                                </span>
+                            {% endif %}
+                        </div>
                         <div class="flex space-x-2">
                             <a href="{% url 'code_reading:codeblock_update' code_block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Código">
                                 <i class="fas fa-edit"></i>
@@ -50,36 +69,77 @@
                             </a>
                         </div>
                     </div>
-                    <pre class="bg-gray-800 text-white p-2 rounded text-xs overflow-x-auto mt-2">{{ code_block.code|truncatechars:100 }}</pre>
-                    {% if code_block.highlight_lines %}
-                        <p class="text-xs text-gray-500 mt-1">Líneas a resaltar: {{ code_block.highlight_lines }}</p>
-                    {% endif %}
+                    
+                    <!-- Incluir el componente del editor -->
+                    {% include 'code_reading/components/code_editor.html' with code_block=code_block %}
+                    
+                    <!-- Información adicional del bloque -->
+                    <div class="px-4 py-2 bg-gray-50 border-t border-gray-200">
+                        <div class="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                            <div>
+                                <span class="font-medium">Configuración:</span>
+                                {% if code_block.show_line_numbers %}
+                                    <span class="ml-1">Números,</span>
+                                {% endif %}
+                                {% if code_block.wrap_lines %}
+                                    <span class="ml-1">Ajuste,</span>
+                                {% endif %}
+                                <span class="ml-1">{{ code_block.height }}px</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Tema:</span>
+                                <span class="ml-1">{{ code_block.get_theme_display }}</span>
+                            </div>
+                        </div>
+                        {% if code_block.highlight_lines %}
+                            <div class="mt-1 text-xs text-gray-600">
+                                <span class="font-medium">Líneas resaltadas:</span>
+                                <span class="ml-1">{{ code_block.highlight_lines }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             {% empty %}
-                <p class="text-sm text-gray-500">No hay bloques de código en este paso.</p>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">No hay bloques de código en este paso. Añade el primer bloque haciendo clic en "Añadir Código".</p>
+                        </div>
+                    </div>
+                </div>
             {% endfor %}
         </div>
     </div>
 
     <!-- Columna Derecha: Explicaciones y Preguntas -->
-    <div class="bg-gray-100 p-4 rounded-lg border border-gray-300">
-        <div class="flex justify-between items-center mb-3">
-            <h4 class="text-md font-semibold text-gray-700">Explicaciones y Preguntas ({{ explanation_blocks.count|add:question_blocks.count }})</h4>
+    <div class="bg-gray-50 p-4 rounded-lg border border-gray-300">
+        <div class="flex justify-between items-center mb-4">
+            <h4 class="text-lg font-semibold text-gray-700 flex items-center">
+                <i class="fas fa-comments mr-2"></i>
+                Explicaciones y Preguntas ({{ explanation_blocks.count|add:question_blocks.count }})
+            </h4>
             <div class="flex space-x-2">
-                <a href="{% url 'code_reading:explanation_create' step.id %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+                <a href="{% url 'code_reading:explanation_create' step.id %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm flex items-center">
                     <i class="fas fa-plus mr-1"></i> Explicación
                 </a>
-                <a href="{% url 'code_reading:question_create' step.id %}" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+                <a href="{% url 'code_reading:question_create' step.id %}" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm flex items-center">
                     <i class="fas fa-plus mr-1"></i> Pregunta
                 </a>
             </div>
         </div>
+        
         <div class="space-y-3">
             {% for block in explanation_blocks|add:question_blocks|dictsort:"order" %}
-                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center">
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
                         {% if block.question_text %}
-                            <p class="text-sm font-medium text-gray-800">Pregunta {{ block.order }}</p>
+                            <div class="flex items-center">
+                                <i class="fas fa-question-circle text-purple-600 mr-2"></i>
+                                <span class="text-sm font-medium text-gray-800">Pregunta {{ block.order }}</span>
+                            </div>
                             <div class="flex space-x-2">
                                 <a href="{% url 'code_reading:question_update' block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Pregunta">
                                     <i class="fas fa-edit"></i>
@@ -89,7 +149,10 @@
                                 </a>
                             </div>
                         {% else %}
-                            <p class="text-sm font-medium text-gray-800">Explicación {{ block.order }}</p>
+                            <div class="flex items-center">
+                                <i class="fas fa-lightbulb text-green-600 mr-2"></i>
+                                <span class="text-sm font-medium text-gray-800">Explicación {{ block.order }}</span>
+                            </div>
                             <div class="flex space-x-2">
                                 <a href="{% url 'code_reading:explanation_update' block.id %}" class="text-yellow-600 hover:text-yellow-800" title="Editar Explicación">
                                     <i class="fas fa-edit"></i>
@@ -100,20 +163,64 @@
                             </div>
                         {% endif %}
                     </div>
-                    <p class="text-xs text-gray-600 mt-2">
+                    
+                    <div class="text-sm text-gray-700 mb-2">
                         {% if block.question_text %}
-                            {{ block.question_text|truncatechars:100 }}
+                            <strong>Pregunta:</strong> {{ block.question_text|truncatechars:100 }}
+                            {% if block.correct_answer %}
+                                <div class="mt-1 text-xs text-gray-500">
+                                    <strong>Criterio de respuesta:</strong> {{ block.correct_answer|truncatechars:80 }}
+                                </div>
+                            {% endif %}
                         {% else %}
-                            {{ block.content|truncatechars:100 }}
+                            {{ block.content|truncatechars:150 }}
                         {% endif %}
-                    </p>
+                    </div>
+                    
                     {% if block.related_code_block %}
-                        <p class="text-xs text-gray-500 mt-1">Relacionado con Código {{ block.related_code_block.order }}</p>
+                        <div class="flex items-center text-xs text-blue-600">
+                            <i class="fas fa-link mr-1"></i>
+                            Relacionado con Código {{ block.related_code_block.order }}
+                        </div>
                     {% endif %}
                 </div>
             {% empty %}
-                <p class="text-sm text-gray-500">No hay explicaciones o preguntas en este paso.</p>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">No hay explicaciones o preguntas en este paso. Añade contenido haciendo clic en "Explicación" o "Pregunta".</p>
+                        </div>
+                    </div>
+                </div>
             {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas del paso -->
+<div class="bg-white p-4 rounded-lg border border-gray-200">
+    <h3 class="text-lg font-medium text-gray-800 mb-3">Estadísticas del paso</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="bg-blue-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-blue-600">{{ code_blocks.count }}</div>
+            <div class="text-sm text-blue-800">Bloques de código</div>
+        </div>
+        <div class="bg-green-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-green-600">{{ explanation_blocks.count }}</div>
+            <div class="text-sm text-green-800">Explicaciones</div>
+        </div>
+        <div class="bg-purple-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-purple-600">{{ question_blocks.count }}</div>
+            <div class="text-sm text-purple-800">Preguntas</div>
+        </div>
+        <div class="bg-yellow-50 p-3 rounded-lg">
+            <div class="text-2xl font-bold text-yellow-600">
+                {{ code_blocks|length|add:explanation_blocks|length|add:question_blocks|length }}
+            </div>
+            <div class="text-sm text-yellow-800">Total elementos</div>
         </div>
     </div>
 </div>
